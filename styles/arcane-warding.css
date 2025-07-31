@@ -1,0 +1,102 @@
+* Arcane Warding Module Styles */
+
+.arcane-warding-notification {
+    background: linear-gradient(135deg, #4a90e2, #357abd);
+    color: white;
+    padding: 10px;
+    border-radius: 8px;
+    margin: 5px 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.arcane-warding-notification h3 {
+    margin: 0 0 8px 0;
+    color: #fff;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.arcane-warding-notification p {
+    margin: 5px 0;
+    font-size: 12px;
+}
+
+/* Token HUD Styles */
+.arcane-ward-hud {
+    position: absolute;
+    bottom: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    border-radius: 4px;
+    padding: 2px 6px;
+    min-width: 80px;
+    text-align: center;
+}
+
+.ward-hp-bar {
+    width: 100%;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 2px;
+}
+
+.ward-hp-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4a90e2, #357abd);
+    transition: width 0.3s ease;
+}
+
+.ward-hp-text {
+    font-size: 10px;
+    color: white;
+    font-weight: bold;
+    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.8);
+}
+
+/* Dialog Styles */
+.arcane-ward-dialog {
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.arcane-ward-dialog h2 {
+    color: #4a90e2;
+    margin-bottom: 15px;
+}
+
+.arcane-ward-dialog p {
+    margin-bottom: 10px;
+    line-height: 1.4;
+}
+
+/* Context Menu Icon */
+.arcane-warding-context-icon {
+    color: #4a90e2;
+    margin-right: 5px;
+}
+
+/* Status Effects */
+.arcane-ward-effect {
+    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%234a90e2"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>') no-repeat center;
+    background-size: contain;
+    width: 24px;
+    height: 24px;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .arcane-ward-hud {
+        bottom: -20px;
+        min-width: 60px;
+        padding: 1px 4px;
+    }
+
+    .ward-hp-text {
+        font-size: 8px;
+    }
+} 
