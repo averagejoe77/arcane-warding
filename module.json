@@ -2,22 +2,39 @@
   "id": "arcane-warding",
   "title": "Arcane Warding",
   "description": "Automates the Abjurer wizard's Arcane Ward feature in Foundry VTT",
-  "version": "1.0.0",
-  "author": "Hunterjoe",
-  "compatibility": {
-    "minimum": "12",
-    "verified": "13"
-  },
-  "relationships.requires": [
+  "version": "1.0.1",
+  "authors": [
     {
-      "id": "midi-qol",
-      "type": "module"
-    },
-    {
-      "id": "visual-active-effects",
-      "type": "module"
+      "name": "Hunterjoe",
+      "url": "https://github.com/averagejoe77"
     }
   ],
+  "compatibility": {
+    "minimum": "12.343",
+    "verified": "13.346"
+  },
+  "relationships": {
+    "systems": [
+      {
+        "id": "dnd5e",
+        "type": "system",
+        "compatibility": {
+          "minimum": "5.0.0",
+          "verified": "5.9.99"
+        }
+      }
+    ],
+    "requires": [
+      {
+        "id": "midi-qol",
+        "type": "module"
+      },
+      {
+        "id": "dae",
+        "type": "module"
+      }
+    ]
+  },
   "esmodules": [
     "scripts/arcane-warding.js"
   ],
