@@ -19,7 +19,7 @@
         "id": "dnd5e",
         "type": "system",
         "compatibility": {
-          "minimum": "5.0.0",
+          "minimum": "4.4.4",
           "verified": "5.9.99"
         }
       }
@@ -27,11 +27,27 @@
     "requires": [
       {
         "id": "midi-qol",
-        "type": "module"
+        "type": "module",
+        "compatibility": {
+          "minimum": "12.4.64",
+          "verified": "13.9.99"
+        }
       },
       {
         "id": "dae",
-        "type": "module"
+        "type": "module",
+        "compatibility": {
+          "minimum": "12.0.29",
+          "verified": "13.9.99"
+        }
+      },
+      {
+        "id": "visual-active-effects",
+        "type": "module",
+        "compatibility": {
+          "minimum": "12.1.5",
+          "verified": "13.9.99"
+        }
       }
     ]
   },
