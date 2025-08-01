@@ -8,13 +8,13 @@
     "minimum": "12",
     "verified": "13"
   },
-  "dependencies": [
+  "relationships.requires": [
     {
-      "name": "midi-qol",
+      "id": "midi-qol",
       "type": "module"
     },
     {
-      "name": "visual-active-effects",
+      "id": "visual-active-effects",
       "type": "module"
     }
   ],
