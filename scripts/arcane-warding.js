@@ -9,7 +9,6 @@ class ArcaneWarding {
         this.ABJURATION_SCHOOLS = ['abjuration', 'abj'];
         this.ABJURER_SUBCLASS = 'Abjurer';
 
-        this.rollMode = "publicroll";
         this.langs = {};
 
         this.initialize();
@@ -32,18 +31,6 @@ class ArcaneWarding {
         // add a hook for when the actor takes damage
         Hooks.on('midi-qol.preTargetDamageApplication', this.handleWardDamage.bind(this));
     }
-
-    async loadLanguages(langSetting) {
-        let langs = {};
-
-        const data = await fetch(`./lang/${langSetting}.json`);
-        langs = await data.json();
-        console.log(`%cArcane Warding | loaded localization file: modules/arcane-warding/lang/${langSetting}.json based on the language setting`, 'color:#06a4b5; font-weight: bold;');
-
-        return langs;
-
-    }
-
 
     /**
      * Create the Arcane Ward effect
@@ -120,8 +107,8 @@ class ArcaneWarding {
      */
     async handleWardDamage(token, {workflow, ditem}) {
 
-        // If the "damage" is actually healing, don't absorb it with the ward.
-        if (ditem.damageDetail.some(detail => detail.type === 'healing')) {
+        // If the "damage" is actually healing, or the attack missed, don't absorb it with the ward.
+        if (ditem.damageDetail.some(detail => detail.type === 'healing') || !ditem.isHit) {
             return true;
         }
 
@@ -266,8 +253,8 @@ class ArcaneWarding {
 
         if (game.release.generation >= 13) {
             const proceed = await foundry.applications.api.DialogV2.confirm({
-                window: {title: title},
-                content: content,
+                window: {title: game.i18n.format('ARCANE_WARDING.DIALOG_TITLE')},
+                content: game.i18n.format('ARCANE_WARDING.DIALOG_CONTENT', { spell: spell.name }),
                 yes: { label: game.i18n.format('ARCANE_WARDING.LABEL_YES') },
                 no: { label: game.i18n.format('ARCANE_WARDING.LABEL_NO') },
                 rejectClose: false,
@@ -276,8 +263,8 @@ class ArcaneWarding {
         } else {
             return new Promise((resolve) => {
                 new Dialog({
-                    title: title,
-                    content: content,
+                    title: game.i18n.format('ARCANE_WARDING.DIALOG_TITLE'),
+                    content: game.i18n.format('ARCANE_WARDING.DIALOG_CONTENT', { spell: spell.name }),
                     buttons: {
                         yes: {
                             icon: '<i class="fas fa-check"></i>',
