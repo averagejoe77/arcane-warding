@@ -39,7 +39,7 @@ jobs:
 
       - name: Package Module
         run: |
-          zip -r ${{ steps.get_module_info.outputs.id }}.zip lang/ module.json scripts/ styles/
+          zip -r module.zip lang/ module.json scripts/ styles/ README.md LICENSE
 
       - name: Upload Release Asset
         id: upload-release-asset
@@ -48,6 +48,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./${{ steps.get_module_info.outputs.id }}.zip
-          asset_name: ${{ steps.get_module_info.outputs.id }}.zip
+          asset_path: ./module.zip
+          asset_name: module.zip
           asset_content_type: application/zip
