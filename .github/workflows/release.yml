@@ -63,14 +63,8 @@ jobs:
           asset_name: module.json
           asset_content_type: application/json
 
-      - name: Notify Foundry VTT
-        uses: foundryvtt/publish-package@v1
+      - name: Release to Foundry VTT
+        uses: illandril/FoundryVTT-package-release-action@v1
         with:
-          # The package ID (from your module.json)
-          package-id: ${{ steps.get_module_info.outputs.id }}
-
-          # The API key you created on the Foundry VTT website
-          foundry-api-key: ${{ secrets.FOUNDRY_API_KEY }}
-
-          # The release version (e.g., "1.2.3")
-          release-version: ${{ steps.get_module_info.outputs.version }}
+          package-release-token: ${{ secrets.PACKAGE_RELEASE_TOKEN }}
+          manifest-url: https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/module.json
