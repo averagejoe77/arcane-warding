@@ -1,0 +1,53 @@
+name: Release Creation
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Get Module Info
+        id: get_module_info
+        run: |
+          MODULE_ID=$(jq -r .id module.json)
+          MODULE_VERSION=$(jq -r .version module.json)
+          echo "::set-output name=id::$MODULE_ID"
+          echo "::set-output name=version::$MODULE_VERSION"
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ steps.get_module_info.outputs.version }}
+          body: |
+            This is an automated release of version ${{ steps.get_module_info.outputs.version }}.
+          draft: false
+          prerelease: false
+
+      - name: Package Module
+        run: |
+          zip -r ${{ steps.get_module_info.outputs.id }}.zip lang/ module.json scripts/ styles/
+
+      - name: Upload Release Asset
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./${{ steps.get_module_info.outputs.id }}.zip
+          asset_name: ${{ steps.get_module_info.outputs.id }}.zip
+          asset_content_type: application/zip
