@@ -23,8 +23,10 @@ jobs:
         run: |
           MODULE_ID=$(jq -r .id module.json)
           MODULE_VERSION=$(jq -r .version module.json)
-          echo "::set-output name=id::$MODULE_ID"
-          echo "::set-output name=version::$MODULE_VERSION"
+          MANIFEST_URL=$(jq -r .manifest module.json)
+          echo "id=$MODULE_ID" >> $GITHUB_OUTPUT
+          echo "version=$MODULE_VERSION" >> $GITHUB_OUTPUT
+          echo "manifest_url=$MANIFEST_URL" >> $GITHUB_OUTPUT
 
       - name: Create Release
         id: create_release
@@ -69,4 +71,4 @@ jobs:
         uses: illandril/FoundryVTT-package-release-action@v1
         with:
           package-release-token: ${{ secrets.PACKAGE_RELEASE_TOKEN }}
-          manifest-url: https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/module.json
+          manifest-url: ${{ steps.get_module_info.outputs.manifest_url }}
