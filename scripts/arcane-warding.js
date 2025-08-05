@@ -9,6 +9,7 @@ class ArcaneWarding {
         this.ABJURATION_SCHOOLS = ['abjuration', 'abj'];
         this.ABJURER_SUBCLASS = 'Abjurer';
 
+        this.fullMessaging = false;
         this.langs = {};
 
         this.initialize();
@@ -21,7 +22,7 @@ class ArcaneWarding {
             // get all the actors
             const actors = game.actors.contents;
             actors.forEach(actor => {
-                if(actor.type === 'character' && this.isAbjurerWizard(actor) && this.hasArcaneWard(actor)) {
+                if(actor.type === 'character' && this.isAbjurerWizard(actor) && !this.hasArcaneWardEffect(actor)) {
                     const wardFeature = this.getArcaneWard(actor);
                     if(wardFeature) this.createArcaneWard(wardFeature, actor);
                 }
@@ -31,6 +32,8 @@ class ArcaneWarding {
     }
 
     registerHooks() {
+        Hooks.on('renderItemSheet5e', this.onRenderItemSheet5e.bind(this));
+
         // Monitor spell casting hooks - after spell is cast
         Hooks.on('midi-qol.RollComplete', this.onSpellCast.bind(this));
 
@@ -39,6 +42,32 @@ class ArcaneWarding {
 
         // add a hook for when the actor takes damage
         Hooks.on('midi-qol.preTargetDamageApplication', this.handleWardDamage.bind(this));
+    }
+
+    onRenderItemSheet5e(sheet, html, data) {
+        const $html = $(html);
+
+        const item = data.item;
+        if (!item || item.name !== 'Arcane Ward') return;
+
+        // Determine automation state
+        const enabled = item.flags?.['arcaneWarding']?.arcaneWard?.fullMessaging;
+
+        const icon = enabled ? 'fa-toggle-on' : 'fa-toggle-off';
+
+        const btn = $(`<div class="arcane-ward-wrap ${enabled ? 'arcane-ward-wrap-enabled' : 'arcane-ward-wrap-disabled'}"><p class="arcane-ward-toggle-title">Toggle Messages</p><span class="arcane-ward-toggle-icon"><i class="fas ${icon}"></i> ${enabled ? 'Enabled' : 'Disabled'}</span><input type="checkbox" class="arcane-ward-toggle" ${enabled ? 'checked' : ''}><label for="arcane-ward-toggle"></label></div>`);
+
+        btn.on('click', async (event) => {
+            event.preventDefault();
+            await item.update({['flags.arcaneWarding.arcaneWard.fullMessaging']: enabled ? false : true});
+            this.fullMessaging = item.flags?.['arcaneWarding']?.arcaneWard?.fullMessaging;
+            sheet.render(false);
+        });
+
+        const sheetHeader = $html.find('.window-content .sheet-header .right');
+        if (sheetHeader) {
+            sheetHeader.append(btn);
+        }
     }
 
     /**
@@ -98,12 +127,12 @@ class ArcaneWarding {
             await wardFeature.update({ "system.activities": activities });
             // check if the activity has the effect
             if(createWardActivity.effects.includes(effect.uuid)) {
-            console.log(`%cArcane Ward | Linked effect to 'Create Ward' activity.`, "color: #00ff00");
+            console.log(`%cArcane Ward | Linked effect to 'Create Ward' activity for ${actor.name}.`, "color: #00ff00");
             } else {
-                console.log(`%cArcane Ward | Effect not linked to 'Create Ward' activity.`, "color: #ff0000");
+                console.log(`%cArcane Ward | Effect not linked to 'Create Ward' activity for ${actor.name}.`, "color: #ff0000");
             }
         } else {
-            console.log(`%cArcane Ward | Effect already linked to 'Create Ward' activity.`, "color: #ffff00");
+            console.log(`%cArcane Ward | Effect already linked to 'Create Ward' activity for ${actor.name}.`, "color: #ffff00");
         }
     }
 
@@ -119,7 +148,9 @@ class ArcaneWarding {
         const currentSpent = wardFeature.system.uses.spent;
 
         if (currentSpent === 0) {
-            sendMessage(game.i18n.format('ARCANE_WARDING.WARD_AT_MAX', { actor: wardFeature.actor.name }), wardFeature.actor);
+            if(this.fullMessaging) {
+                sendMessage(game.i18n.format('ARCANE_WARDING.WARD_AT_MAX', { actor: wardFeature.actor.name }), wardFeature.actor);
+            }
             return {
                 success: false
             }
@@ -189,7 +220,9 @@ class ArcaneWarding {
             message += game.i18n.format('ARCANE_WARDING.ABSORBED_MESSAGE_SUCCESS', { actor: actor.name });
         }
 
-        sendMessage(message, actor);
+        if(this.fullMessaging) {
+            sendMessage(message, actor);
+        }
 
         if (remainingDamage === 0) {
 
@@ -209,7 +242,9 @@ class ArcaneWarding {
                 type = "emote";
             }
 
-            sendMessage(wittyMessage, actor, type, useBubble);
+            if(this.fullMessaging) {
+                sendMessage(wittyMessage, actor, type, useBubble);
+            }
         }
         
         return true;
@@ -224,7 +259,7 @@ class ArcaneWarding {
     async onRestCompleted(actor, data) {
         // get the arcane ward effect
         const hasArcaneWardEffect = this.hasArcaneWardEffect(actor);
-        if(hasArcaneWardEffect && data.type === 'long') {
+        if(hasArcaneWardEffect && data.type === 'long' && this.fullMessaging) {
             sendMessage(game.i18n.format('ARCANE_WARDING.LONG_REST', { actor: actor.name }), actor);
         }
     }
@@ -268,7 +303,9 @@ class ArcaneWarding {
                     const effect = this.getArcaneWardEffect(wardFeature);
                     if (effect) {
                         await actor.createEmbeddedDocuments("ActiveEffect", [effect.toObject()]);
-                        sendMessage(game.i18n.format('ARCANE_WARDING.EFFECT_CREATED', { actor: actor.name }), actor);
+                        if(this.fullMessaging) {
+                            sendMessage(game.i18n.format('ARCANE_WARDING.EFFECT_CREATED', { actor: actor.name }), actor);
+                        }
                     }
                 }
             }
@@ -282,7 +319,9 @@ class ArcaneWarding {
             const result = await this.healArcaneWard(wardFeature, spell);
 
             if(result.success) {
-                sendMessage(game.i18n.format('ARCANE_WARDING.WARD_HEALED', { actor: actor.name }), actor);
+                if(this.fullMessaging) {
+                    sendMessage(game.i18n.format('ARCANE_WARDING.WARD_HEALED', { actor: actor.name }), actor);
+                }
             }
         }
     }
@@ -377,12 +416,12 @@ class ArcaneWarding {
     /**
      * Get the Arcane Ward effect
      * 
-     * @param {Item} item - The item to check
+     * @param {Item or Actor} item - The item or actor to check
      * @returns {ActiveEffect} - The Arcane Ward effect
      */
-    getArcaneWardEffect(document) {
-        if(this.hasArcaneWardEffect(document)) {
-            return document.effects.find(effect => effect.name === "Arcane Ward");
+    getArcaneWardEffect(item) {
+        if(this.hasArcaneWardEffect(item)) {
+            return item.effects.find(effect => effect.name === "Arcane Ward");
         }
         return null;
     }
@@ -390,11 +429,11 @@ class ArcaneWarding {
     /**
      * Check if the actor has the Arcane Ward effect
      * 
-     * @param {Actor or Item} document - The actor or item to check
+     * @param {Actor or Item} item - The actor or item to check
      * @returns {boolean} - True if the actor has an Arcane Ward effect, false otherwise
      */
-    hasArcaneWardEffect(document) {
-        return document.effects.find(effect => effect.name === "Arcane Ward") ? true : false;
+    hasArcaneWardEffect(item) {
+        return item.effects.find(effect => effect.name === "Arcane Ward") ? true : false;
     }
 
     /**
