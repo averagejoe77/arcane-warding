@@ -62,3 +62,15 @@ jobs:
           asset_path: ./module.json
           asset_name: module.json
           asset_content_type: application/json
+
+      - name: Notify Foundry VTT
+        uses: foundryvtt/publish-package@v1
+        with:
+          # The package ID (from your module.json)
+          package-id: ${{ steps.get_module_info.outputs.id }}
+
+          # The API key you created on the Foundry VTT website
+          foundry-api-key: ${{ secrets.FOUNDRY_API_KEY }}
+
+          # The release version (e.g., "1.2.3")
+          release-version: ${{ steps.get_module_info.outputs.version }}
