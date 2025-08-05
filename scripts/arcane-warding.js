@@ -33,6 +33,7 @@ class ArcaneWarding {
 
     registerHooks() {
         Hooks.on('renderItemSheet5e', this.onRenderItemSheet5e.bind(this));
+        Hooks.on('renderItemSheet5es', this.onRenderItemSheet5e.bind(this));
 
         // Monitor spell casting hooks - after spell is cast
         Hooks.on('midi-qol.RollComplete', this.onSpellCast.bind(this));
@@ -44,28 +45,56 @@ class ArcaneWarding {
         Hooks.on('midi-qol.preTargetDamageApplication', this.handleWardDamage.bind(this));
     }
 
-    onRenderItemSheet5e(sheet, html, data) {
+    async onRenderItemSheet5e(sheet, html, data) {
         const $html = $(html);
 
         const item = data.item;
         if (!item || item.name !== 'Arcane Ward') return;
 
+        // Ensure the flag is present
+        if (item.flags?.arcaneWarding?.fullMessaging === undefined) {
+            await item.update({ 'flags.arcaneWarding.fullMessaging': false }, { render:false
+            });
+        }
+        
         // Determine automation state
-        const enabled = item.flags?.['arcaneWarding']?.arcaneWard?.fullMessaging;
+        const enabled = item.flags?.arcaneWarding?.fullMessaging ?? false;
 
         const icon = enabled ? 'fa-toggle-on' : 'fa-toggle-off';
 
-        const btn = $(`<div class="arcane-ward-wrap ${enabled ? 'arcane-ward-wrap-enabled' : 'arcane-ward-wrap-disabled'}"><p class="arcane-ward-toggle-title">Toggle Messages</p><span class="arcane-ward-toggle-icon"><i class="fas ${icon}"></i> ${enabled ? 'Enabled' : 'Disabled'}</span><input type="checkbox" class="arcane-ward-toggle" ${enabled ? 'checked' : ''}><label for="arcane-ward-toggle"></label></div>`);
+        const btn = $(`
+            <div class="arcane-ward-wrap ${enabled ? 'arcane-ward-wrap-enabled' : 'arcane-ward-wrap-disabled'}">
+                <p class="arcane-ward-toggle-title">Toggle Messages</p>
+                <span class="arcane-ward-toggle-icon"><i class="fas ${icon}"></i> ${enabled ? 'Enabled' : 'Disabled'}</span>
+                <input type="checkbox" class="arcane-ward-toggle" ${enabled ? 'checked' : ''}>
+                <label for="arcane-ward-toggle"></label>
+            </div>
+        `);
 
         btn.on('click', async (event) => {
             event.preventDefault();
-            await item.update({['flags.arcaneWarding.arcaneWard.fullMessaging']: enabled ? false : true});
-            this.fullMessaging = item.flags?.['arcaneWarding']?.arcaneWard?.fullMessaging;
-            sheet.render(false);
+            
+            const currentEnabled = item.flags?.arcaneWarding?.fullMessaging ?? false;
+            const newEnabled = !currentEnabled;
+
+            await item.update({ 'flags.arcaneWarding.fullMessaging': newEnabled }, { render: false });
+            this.fullMessaging = newEnabled;
+
+            // Update UI elements directly
+            const $wrap = $(event.currentTarget);
+            $wrap.toggleClass('arcane-ward-wrap-enabled', newEnabled).toggleClass('arcane-ward-wrap-disabled', !newEnabled);
+            
+            const $span = $wrap.find('.arcane-ward-toggle-icon');
+            const iconClass = newEnabled ? 'fa-toggle-on' : 'fa-toggle-off';
+            const text = newEnabled ? 'Enabled' : 'Disabled';
+            $span.html(`<i class="fas ${iconClass}"></i> ${text}`);
+            
+            const $checkbox = $wrap.find('input.arcane-ward-toggle');
+            $checkbox.prop('checked', newEnabled);
         });
 
         const sheetHeader = $html.find('.window-content .sheet-header .right');
-        if (sheetHeader) {
+        if (sheetHeader.length > 0 && !$html.find('.arcane-ward-wrap').length) {
             sheetHeader.append(btn);
         }
     }
