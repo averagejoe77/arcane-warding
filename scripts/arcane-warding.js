@@ -26,6 +26,21 @@ class ArcaneWarding {
                     const wardFeature = this.getArcaneWard(actor);
                     if(wardFeature) this.createArcaneWard(wardFeature, actor);
                 }
+
+                if(actor.type === 'character' && this.isAbjurerWizard(actor) && this.hasArcaneWard(actor)) {
+                    const wardFeature = this.getArcaneWard(actor);
+                    if(wardFeature) {
+                        this.fullMessaging = wardFeature.flags?.arcaneWarding?.fullMessaging;
+                        console.log("%c Arcane Warding | Full messaging set to:", "color: #00ff00", this.fullMessaging);
+                        // remove the old flag and update the flag
+                        const flags = wardFeature.flags;
+                        if(flags.arcaneWarding.hasOwnProperty('arcaneWard')) {
+                            delete flags.arcaneWarding.arcaneWard;
+                            console.log("%c Arcane Warding | Flag removed:", "color: #00ff00", flags);
+                        }
+                    }
+                }
+                
             });
         });
 

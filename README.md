@@ -17,7 +17,7 @@ According to RAW, the caster can choose to activate the ward when casting an Abj
 ## Installation
 
 Like most modules, find it in the module directory in Foundry, or use the manifest url:
-https://github.com/averagejoe77/arcane-warding/releases/latest/download/module.json to install manually.
+<https://github.com/averagejoe77/arcane-warding/releases/latest/download/module.json> to install manually.
 
 ## How It Works
 
@@ -46,7 +46,7 @@ When a spell is cast, the module:
 
 - **Token HUD**: You can enable bars on your token and set one of them to the arcane ward's hp value. This bar will be the blue-ish colored one
 - **Chat Notifications**: Displays chat messages on activation, damage absorbed, healing, and long resting, along with some added "flavor" in the messages. If chat bubbles are enabled, you will also get some entertaining responses from the token that is being attacked.
-- **Dialog Prompts**: Asks if player wants to create the ward when casting an Abjuration spell for the first time. 
+- **Dialog Prompts**: Asks if player wants to create the ward when casting an Abjuration spell for the first time
 
 ## Usage
 
@@ -62,7 +62,7 @@ The module works automatically once enabled. When an Abjurer wizard casts an Abj
 ### Visual Indicators
 
 - With bars enabled on a token, the blue bar shows current ward health without numeric values
-- When using the D&D5e PHB version of the class feature, the chracter sheet displays the wards HP as it's uses. 
+- When using the D&D5e PHB version of the class feature, the chracter sheet displays the wards HP as it's uses
 
 ## Technical Details
 
@@ -100,3 +100,5 @@ This module is provided as-is for use with Foundry VTT. Feel free to modify and 
 **v1.0.0**: Initial release with basic Arcane Ward functionality
 
 **v1.0.1**: Fixed the module.json for dependencies so they are prompted to be installed if missing
+
+**v1.1.7**: Fixed messaging flag using the wrong flag
