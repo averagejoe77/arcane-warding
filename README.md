@@ -102,3 +102,5 @@ This module is provided as-is for use with Foundry VTT. Feel free to modify and 
 **v1.0.1**: Fixed the module.json for dependencies so they are prompted to be installed if missing
 
 **v1.1.7**: Fixed messaging flag using the wrong flag
+
+**v1.2.7**: Added support for the Projected Ward class feature

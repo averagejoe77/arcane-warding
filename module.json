@@ -2,7 +2,8 @@
   "id": "arcane-warding",
   "title": "Arcane Warding",
   "description": "Automates the Abjurer wizard's Arcane Ward feature in Foundry VTT",
-  "version": "1.1.7",
+  "version": "1.2.7",
+  "socket": true,
   "authors": [
     {
       "name": "Hunterjoe",
@@ -47,6 +48,13 @@
         "compatibility": {
           "minimum": "12.1.5",
           "verified": "13.9.99"
+        }
+      },
+      {
+        "id": "socketlib",
+        "type": "module",
+        "compatibility": {
+          "minimum": "1.1.2"
         }
       }
     ]
