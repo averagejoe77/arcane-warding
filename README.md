@@ -104,3 +104,5 @@ This module is provided as-is for use with Foundry VTT. Feel free to modify and 
 **v1.1.7**: Fixed messaging flag using the wrong flag
 
 **v1.2.7**: Added support for the Projected Ward class feature
+
+**v1.2.9**: Added distance support for v12
