@@ -99,7 +99,7 @@ class ArcaneWarding {
 
                     // if the actor is more than 30 feet away from the target, skip the rest of the loop
                     const distance = this.getDistance(actor, targetActor, {wallsBlock: true, checkCover: true});
-                    if(distance === -1) {
+                    if(distance === -1 || distance > 30) {
                         continue;
                     }
 
@@ -749,6 +749,14 @@ class ArcaneWarding {
         return result;
     }
 
+
+    /**
+     * Get the formatted messages for the witty message
+     * 
+     * @param {Actor} actor - The actor to check
+     * @param {Actor} target - The target of the actor
+     * @returns {Object} - The formatted messages
+     */
     getFormattedMessages(actor, target) {
 
         const wittyMessagesFirstPerson = game.i18n.translations.ARCANE_WARDING.WITTY_MESSAGES.FIRST_PERSON;
