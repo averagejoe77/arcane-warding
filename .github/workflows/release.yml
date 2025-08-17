@@ -18,11 +18,21 @@ jobs:
         with:
           node-version: 20
 
+      - name: Update Version from Tag
+        run: |
+          TAG_VERSION=${GITHUB_REF#refs/tags/}
+          jq --arg version "$TAG_VERSION" '.version = $version' module.json > module.json.tmp && mv module.json.tmp module.json
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add module.json
+          git commit -m "Automated version bump to $TAG_VERSION"
+          git push
+
       - name: Get Module Info
         id: get_module_info
         run: |
           MODULE_ID=$(jq -r .id module.json)
-          MODULE_VERSION=$(jq -r .version module.json)
+          MODULE_VERSION=${GITHUB_REF#refs/tags/}
           MANIFEST_URL=$(jq -r .manifest module.json)
           echo "id=$MODULE_ID" >> $GITHUB_OUTPUT
           echo "version=$MODULE_VERSION" >> $GITHUB_OUTPUT
