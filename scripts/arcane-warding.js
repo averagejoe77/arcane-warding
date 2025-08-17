@@ -31,7 +31,9 @@ class ArcaneWarding {
     }
 
     registerHooks() {
+        // add the toggle messages button to the item sheet for v13
         Hooks.on('renderItemSheet5e', this.onRenderItemSheet5e.bind(this));
+        // add the toggle messages button to the item sheet for v12
         Hooks.on('renderItemSheet5es', this.onRenderItemSheet5e.bind(this));
 
         // Monitor spell casting hooks - after spell is cast
@@ -43,8 +45,7 @@ class ArcaneWarding {
         // add a hook for when the actor takes damage
         Hooks.on('midi-qol.preTargetDamageApplication', this.handleWardDamage.bind(this));
 
-        // add a hook for the dnd5e.postAttackRollConfiguration for Projected Ward triggering
-        // Hooks.on('dnd5e.postAttackRollConfiguration', this.triggerProjectedWard.bind(this));
+        // add a hook for the for Projected Ward triggering
         Hooks.on('midi-qol.AttackRollComplete', this.triggerProjectedWard.bind(this));
     }
 
@@ -557,6 +558,17 @@ class ArcaneWarding {
         }
     }
 
+    /**
+     * Create a dialog for v13
+     * 
+     * @param {string} title - The title of the dialog
+     * @param {string} content - The content of the dialog
+     * @param {string} yesLabel - The label for the yes button
+     * @param {string} noLabel - The label for the no button
+     * @param {string[]} classes - The classes for the dialog
+     * @param {number} timeout - The timeout for the dialog
+     * @returns {Promise<string>} The result of the dialog
+     */
     _createDialogV13(title, content, yesLabel, noLabel, classes, timeout) {
         return new Promise((resolve) => {
             let timerId;
@@ -600,6 +612,16 @@ class ArcaneWarding {
         });
     }
 
+    /**
+     * Create a dialog for v12
+     * 
+     * @param {string} title - The title of the dialog
+     * @param {string} content - The content of the dialog
+     * @param {string} yesLabel - The label for the yes button
+     * @param {string} noLabel - The label for the no button
+     * @param {number} timeout - The timeout for the dialog
+     * @returns {Promise<string>} The result of the dialog
+     */
     _createDialogLegacy(title, content, yesLabel, noLabel, timeout) {
         return new Promise((resolve) => {
             let timerId;

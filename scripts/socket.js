@@ -1,5 +1,11 @@
 export const SOCKET_NAME = 'module.arcane-warding';
 
+/**
+ * Show a bubble for the actor
+ * 
+ * @param {string} actorId - The id of the actor
+ * @param {string} messageId - The id of the message
+ */
 export function showBubble(actorId, messageId) {
     const actor = game.actors.get(actorId);
     const message = game.messages.get(messageId);
@@ -14,6 +20,11 @@ export function showBubble(actorId, messageId) {
     }
 }
 
+/**
+ * Handle a send message request
+ * 
+ * @param {Object} data - The data for the send message request
+ */
 export function handleSendMessageRequest(data) {
     if (game.user.isGM) {
         ChatMessage.create(data.chatData).then(msg => {
@@ -31,6 +42,9 @@ export function handleSendMessageRequest(data) {
     }
 }
 
+/**
+ * Register the socket
+ */
 export function registerSocket() {
     game.socket.on(SOCKET_NAME, (data) => {
         console.log('Arcane Warding | Socket event received', data);
@@ -46,6 +60,11 @@ export function registerSocket() {
     });
 }
 
+/**
+ * Handle a socket dialog request
+ * 
+ * @param {Object} data - The data for the socket dialog request
+ */
 async function handleSocketDialog(data) {
     console.log('Arcane Warding | Handling createDialog socket event', data);
     const actor = data.actorId ? game.actors.get(data.actorId) : null;

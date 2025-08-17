@@ -1,5 +1,13 @@
 import { SOCKET_NAME, handleSendMessageRequest } from './socket.js';
 
+/**
+ * Send a message to the chat
+ * 
+ * @param {string} message - The message to send
+ * @param {Actor} actor - The actor to send the message
+ * @param {string} mode - The mode to send the message
+ * @param {boolean} useBubble - Whether to use a bubble for the message
+ */
 function sendMessage(message, actor, mode = "publicroll", useBubble = false) {
     const speaker = ChatMessage.getSpeaker({ actor: actor });
     const chatData = {
