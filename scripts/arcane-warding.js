@@ -1,4 +1,4 @@
-import { sendMessage } from './utils.js';
+import { sendMessage, isAbjurerWizard, getArcaneWard, hasArcaneWard, getArcaneWardEffect, hasArcaneWardEffect, getArcaneWardHP, isAbjurationSpell, generateWittyMessage, generateWittyMessagePW, shouldSkip, getActorsWithProjectedWard, useFullMessaging } from './utils.js';
 import { registerSocket, SOCKET_NAME } from './socket.js';
 
 /**
@@ -9,10 +9,7 @@ class ArcaneWarding {
     constructor() {
         this.ABJURATION_SCHOOLS = ['abjuration', 'abj'];
         this.ABJURER_SUBCLASS = 'Abjurer';
-
-        this.fullMessaging = false;
         this.langs = {};
-
         this.initialize();
     }
 
@@ -23,23 +20,9 @@ class ArcaneWarding {
             // get all the actors
             const actors = game.actors.contents;
             actors.forEach(actor => {
-                if(actor.type === 'character' && this.isAbjurerWizard(actor) && !this.hasArcaneWardEffect(actor)) {
-                    const wardFeature = this.getArcaneWard(actor);
+                if(actor.type === 'character' && isAbjurerWizard(actor, this.ABJURER_SUBCLASS) && !hasArcaneWard(actor)) {
+                    const wardFeature = getArcaneWard(actor);
                     if(wardFeature) this.createArcaneWard(wardFeature, actor);
-                }
-
-                if(actor.type === 'character' && this.isAbjurerWizard(actor) && this.hasArcaneWard(actor)) {
-                    const wardFeature = this.getArcaneWard(actor);
-                    if(wardFeature) {
-                        this.fullMessaging = wardFeature.flags?.arcaneWarding?.fullMessaging;
-                        console.log("%c Arcane Warding | Full messaging set to:", "color: #00ff00", this.fullMessaging);
-                        // remove the old flag
-                        const flags = wardFeature.flags;
-                        if(flags.arcaneWarding.hasOwnProperty('arcaneWard')) {
-                            delete flags.arcaneWarding.arcaneWard;
-                            console.log("%c Arcane Warding | Flag removed:", "color: #00ff00", flags);
-                        }
-                    }
                 }
                 
             });
@@ -85,40 +68,43 @@ class ArcaneWarding {
 
         if(isHit && !targetActor.effects.find(ef => ef.name === game.i18n.format('ARCANE_WARDING.EFFECT_NAME'))) {
 
-            // get the actor that has the arcane ward feature
-            const actors = game.actors.contents;
+            // get the actors that have the projected ward feature
+            const actors = getActorsWithProjectedWard();
             for(const actor of actors) {
-                if(actor.type === 'character' && this.isAbjurerWizard(actor) && this.hasArcaneWard(actor)) {
-                    const wardFeature = this.getArcaneWard(actor);
+                // check if the actor should skip triggering the projected ward
+                if(shouldSkip(actor, targetActor, attacker)) {
+                    continue;
+                }
 
-                    // check if the ward has any remaining hp, if not, skip the rest of the loop
-                    const currentWardHP = this.getArcaneWardHP(actor);
-                    if(currentWardHP === 0) {
-                        continue;
-                    }
+                const result = await this.createDialog(item, "PROJECTED_WARD", actor, attacker, targetActor, false, 3);
 
-                    // if the actor is more than 30 feet away from the target, skip the rest of the loop
-                    const distance = this.getDistance(actor, targetActor, {wallsBlock: true, checkCover: true});
-                    if(distance === -1 || distance > 30) {
-                        continue;
-                    }
+                if(result === 'yes') {
 
-                    const result = await this.createDialog(item, "PROJECTED_WARD", actor, attacker, targetActor);
+                    // get the arcane ward feature
+                    const wardFeature = getArcaneWard(actor);
+                    // add the arcane ward effect to the target
+                    const effect = getArcaneWardEffect(wardFeature);
 
-                    if(result === 'yes') {
-                        // add the arcane ward effect to the target
-                        const effect = this.getArcaneWardEffect(wardFeature);
-                        if(effect) {
-                            const success = await this.applyArcaneWardEffect(actor, targetActor);
-                            if(success) {
-                                if(this.fullMessaging) {
-                                    sendMessage(game.i18n.format('ARCANE_WARDING.PROJECTED_WARD_APPLIED', { actor: actor.name, target: targetActor.name }), actor);
-                                }
-                                Hooks.once('midi-qol.preTargetDamageApplication', this.handleProjectedWardDamage.bind(this));
+                    if(effect) {
+                        const success = await this.applyArcaneWardEffect(actor, targetActor);
+                        if(success) {
+                            if(useFullMessaging(actor)) {
+                                sendMessage(game.i18n.format('ARCANE_WARDING.PROJECTED_WARD_APPLIED', { actor: actor.name, target: targetActor.name }), actor);
                             }
+                            Hooks.once('midi-qol.preTargetDamageApplication', this.handleProjectedWardDamage.bind(this));
                         }
                     }
+                } else {
+                    return true;
                 }
+            }
+        } else {
+
+            const sendMsg = Math.random() < 0.5 ? true : false;
+            
+            if(sendMsg) {
+                const msg = generateWittyMessage(targetActor, attacker, "firstPerson");
+                sendMessage(msg, targetActor, "emote", true);
             }
         }
         return true;
@@ -135,53 +121,54 @@ class ArcaneWarding {
 
         const target = game.actors.get(ditem.actorId);
 
-        const actors = game.actors.contents;
+        const actors = getActorsWithProjectedWard();
         for(const actor of actors) {
-            if(actor.type === 'character' && this.isAbjurerWizard(actor) && this.hasArcaneWard(actor)) {
-                const wardFeature = this.getArcaneWard(actor);
 
-                const currentWardHP = this.getArcaneWardHP(actor);
-                const totalDamage = ditem.totalDamage;
-                const damageToAbsorb = Math.min(currentWardHP, totalDamage);
-                const remainingDamage = totalDamage - damageToAbsorb;
-                ditem.totalDamage = remainingDamage;
-                ditem.hpDamage = remainingDamage;
-                ditem.damageDetail.forEach(dd => { dd.value = remainingDamage;});
+            const wardFeature = getArcaneWard(actor);
 
-                const newWardHP = currentWardHP - damageToAbsorb;
-                const newSpent = wardFeature.system.uses.max - newWardHP;
-                await wardFeature.update({ "system.uses.spent": newSpent });
+            const currentWardHP = getArcaneWardHP(actor);
+            const totalDamage = ditem.totalDamage;
+            const damageToAbsorb = Math.min(currentWardHP, totalDamage);
+            const remainingDamage = totalDamage - damageToAbsorb;
+            ditem.totalDamage = remainingDamage;
+            ditem.hpDamage = remainingDamage;
+            ditem.damageDetail.forEach(dd => { dd.value = remainingDamage;});
 
-                // remove the arcane ward effect from the target
-                const targetEffect = target.effects.find(ef => ef.name === game.i18n.format('ARCANE_WARDING.EFFECT_NAME'));
-                if(targetEffect) {
-                    await targetEffect.delete();
-                }
+            const newWardHP = currentWardHP - damageToAbsorb;
+            const newSpent = wardFeature.system.uses.max - newWardHP;
+            await wardFeature.update({ "system.uses.spent": newSpent });
 
-                let message = game.i18n.format('ARCANE_WARDING.PROJECTED_WARD_ABSORBED_BASE', { actor: actor.name, target: target.name, attacker: attacker.name });
-
-                if(newWardHP === 0) {
-                    message += game.i18n.format('ARCANE_WARDING.PROJECTED_WARD_ABSORBED_0HP', { actor: actor.name, target: target.name });
-                } else {
-                    message += game.i18n.format('ARCANE_WARDING.PROJECTED_WARD_ABSORBED_SUCCESS', { actor: actor.name, target: target.name });
-                }
-
-                if(remainingDamage > 0) {
-                    message += game.i18n.format('ARCANE_WARDING.PROJECTED_WARD_ABSORBED_REMAINING_DMG', { actor: actor.name, target: target.name, remaining: Math.ceil(remainingDamage) });
-                } else {
-                    message += game.i18n.format('ARCANE_WARDING.PROJECTED_WARD_ABSORBED_NO_DMG', { actor: actor.name, target: target.name, attacker: attacker.name });
-                }
-
-                if(this.fullMessaging) {
-                    sendMessage(message, actor);
-                }
-
-                return true;
-
+            // remove the arcane ward effect from the target
+            const targetEffect = target.effects.find(ef => ef.name === game.i18n.format('ARCANE_WARDING.EFFECT_NAME'));
+            if(targetEffect) {
+                await targetEffect.delete();
             }
-        }
 
-        return false;
+            let message = game.i18n.format('ARCANE_WARDING.PROJECTED_WARD_ABSORBED_BASE', { actor: actor.name, target: target.name, attacker: attacker.name });
+
+            if(newWardHP === 0) {
+                message += game.i18n.format('ARCANE_WARDING.PROJECTED_WARD_ABSORBED_0HP', { actor: actor.name, target: target.name });
+            } else {
+                message += game.i18n.format('ARCANE_WARDING.PROJECTED_WARD_ABSORBED_SUCCESS', { actor: actor.name, target: target.name });
+            }
+
+            if(useFullMessaging(actor)) {
+                sendMessage(message, actor);
+            }
+
+            if(remainingDamage === 0) {
+                // generate a random message for the target to say to the actor (or the attacker)
+                let scope = Math.random() < 0.5 ? "attacker" : "actor";
+                
+                let wittyPWMessage = generateWittyMessagePW(actor, target, attacker, scope);
+
+                if(useFullMessaging(actor)) {
+                    sendMessage(wittyPWMessage, target, "emote", true);
+                }
+            }
+
+            return true;
+        }
     }
 
     /**
@@ -224,7 +211,6 @@ class ArcaneWarding {
             const newEnabled = !currentEnabled;
 
             await item.update({ 'flags.arcaneWarding.fullMessaging': newEnabled }, { render: false });
-            this.fullMessaging = newEnabled;
 
             // Update UI elements directly
             const $wrap = $(event.currentTarget);
@@ -260,7 +246,7 @@ class ArcaneWarding {
         await wardFeature.update({ "system.uses.spent": 0 });
 
         // --- Effect Handling ---
-        let effect = this.getArcaneWardEffect(wardFeature);
+        let effect = getArcaneWardEffect(wardFeature);
         if (!effect) {
             const effectData = {
                 name: game.i18n.format('ARCANE_WARDING.EFFECT_NAME'),
@@ -323,7 +309,7 @@ class ArcaneWarding {
         const currentSpent = wardFeature.system.uses.spent;
 
         if (currentSpent === 0) {
-            if(this.fullMessaging) {
+            if(useFullMessaging(wardFeature.actor)) {
                 sendMessage(game.i18n.format('ARCANE_WARDING.WARD_AT_MAX', { actor: wardFeature.actor.name }), wardFeature.actor);
             }
             return {
@@ -359,11 +345,11 @@ class ArcaneWarding {
         }
 
         const actor = token.actor;
-        const wardFeature = this.getArcaneWard(actor);
+        const wardFeature = getArcaneWard(actor);
         const attacker = workflow.token;
-        if (!this.isAbjurerWizard(actor) || !this.hasArcaneWardEffect(actor)) return true;
+        if (!isAbjurerWizard(actor, this.ABJURER_SUBCLASS) || !hasArcaneWardEffect(actor)) return true;
 
-        let currentWardHP = this.getArcaneWardHP(actor);
+        let currentWardHP = getArcaneWardHP(actor);
 
         if (currentWardHP === 0) return true;
 
@@ -395,7 +381,7 @@ class ArcaneWarding {
             message += game.i18n.format('ARCANE_WARDING.ABSORBED_MESSAGE_SUCCESS', { actor: actor.name });
         }
 
-        if(this.fullMessaging) {
+        if(useFullMessaging(actor)) {
             sendMessage(message, actor);
         }
 
@@ -405,7 +391,7 @@ class ArcaneWarding {
             const scope = Math.random() < 0.5 ? "firstPerson" : "thirdPerson";
 
             // generate the witty message based on the scope
-            let wittyMessage = this.generateWittyMessage(actor, attacker, scope);
+            let wittyMessage = generateWittyMessage(actor, attacker, scope);
 
             // defaults for type of message and if we should use a bubble
             let useBubble = false;
@@ -417,7 +403,7 @@ class ArcaneWarding {
                 type = "emote";
             }
 
-            if(this.fullMessaging) {
+            if(useFullMessaging(actor)) {
                 sendMessage(wittyMessage, actor, type, useBubble);
             }
         }
@@ -432,9 +418,7 @@ class ArcaneWarding {
      * @param {Object} data - The data object from the long rest
      */
     async onRestCompleted(actor, data) {
-        // get the arcane ward effect
-        const hasArcaneWardEffect = this.hasArcaneWardEffect(actor);
-        if(hasArcaneWardEffect && data.type === 'long' && this.fullMessaging) {
+        if(hasArcaneWardEffect(actor) && data.type === 'long' && useFullMessaging(actor)) {
             sendMessage(game.i18n.format('ARCANE_WARDING.LONG_REST', { actor: actor.name }), actor);
         }
     }
@@ -448,12 +432,12 @@ class ArcaneWarding {
         if (workflow.item?.type !== 'spell' || workflow.actor.type !== 'character') return;
 
         const actor = workflow.actor;
-        if (!this.isAbjurerWizard(actor)) return;
+        if (!isAbjurerWizard(actor, this.ABJURER_SUBCLASS)) return;
 
         const spell = workflow.item;
-        const isAbjurationSpell = this.isAbjurationSpell(spell);
+        const isAbjSpell = isAbjurationSpell(spell, this.ABJURATION_SCHOOLS);
 
-        if (!isAbjurationSpell) return;
+        if (!isAbjSpell) return;
 
         await this.processAbjurationSpell(actor, spell);
     }
@@ -465,20 +449,20 @@ class ArcaneWarding {
      * @param {Spell} spell - The spell that was cast
      */
     async processAbjurationSpell(actor, spell) {
-        const wardFeature = this.getArcaneWard(actor);
+        const wardFeature = getArcaneWard(actor);
         const hasWardEffect = actor.effects.find(ef => ef.name === game.i18n.format('ARCANE_WARDING.EFFECT_NAME'));
         
         // If no ward exists, ask if they want to create one
         if (!hasWardEffect) {
-            const result = await this.createDialog(spell);
+            const result = await this.createDialog(spell, "ARCANE_WARD", actor);
             if(result === 'yes') {
                 // Find the "Create Ward" activity and apply its effects
                 const createWardActivity = wardFeature.system.activities.find(a => a.name === "Create Ward");
                 if (createWardActivity) {
-                    const effect = this.getArcaneWardEffect(wardFeature);
+                    const effect = getArcaneWardEffect(wardFeature);
                     if (effect) {
                         await actor.createEmbeddedDocuments("ActiveEffect", [effect.toObject()]);
-                        if(this.fullMessaging) {
+                        if(useFullMessaging(actor)) {
                             sendMessage(game.i18n.format('ARCANE_WARDING.EFFECT_CREATED', { actor: actor.name }), actor);
                         }
                     }
@@ -494,7 +478,7 @@ class ArcaneWarding {
             const result = await this.healArcaneWard(wardFeature, spell);
 
             if(result.success) {
-                if(this.fullMessaging) {
+                if(useFullMessaging(actor)) {
                     sendMessage(game.i18n.format('ARCANE_WARDING.WARD_HEALED', { actor: actor.name }), actor);
                 }
             }
@@ -511,7 +495,7 @@ class ArcaneWarding {
      * @param {Actor} target - The actor that is being attacked or the actor that is being protected by the arcane ward
      * @param {boolean} fromSocket - Whether the dialog is being created from a socket
      */
-    async createDialog(spell = null, type = "ARCANE_WARD", actor = null, attacker = null, target = null, fromSocket = false) {
+    async createDialog(spell = null, type = "ARCANE_WARD", actor = null, attacker = null, target = null, fromSocket = false, timeout = null) {
         const owner = actor ? game.users.find(u => u.character?.id === actor.id && u.active && !u.isGM) : game.user;
 
         if (game.user.isGM && owner && owner.id !== game.user.id && !fromSocket) {
@@ -527,7 +511,8 @@ class ArcaneWarding {
                         actorId: actor ? actor.id : null,
                         attackerId: attacker ? attacker.id : null,
                         targetId: target ? target.id : null,
-                        requestId: requestId
+                        requestId: requestId,
+                        timeout: timeout
                     }
                 });
 
@@ -555,141 +540,103 @@ class ArcaneWarding {
             data.target = target.name;
         }
 
+        const classes = ['arcane-warding-dialog'];
+        if(type === 'PROJECTED_WARD') {
+            classes.push('projected-ward-dialog');
+        }
+
         const title = game.i18n.format(`ARCANE_WARDING.DIALOG.${type}.TITLE`, data);
         const content = game.i18n.format(`ARCANE_WARDING.DIALOG.${type}.CONTENT`, data);
         const yesLabel = game.i18n.format('ARCANE_WARDING.LABEL_YES');
         const noLabel = game.i18n.format('ARCANE_WARDING.LABEL_NO');
 
         if (game.release.generation >= 13) {
-            const proceed = await foundry.applications.api.DialogV2.confirm({
+            return this._createDialogV13(title, content, yesLabel, noLabel, classes, timeout);
+        } else {
+            return this._createDialogLegacy(title, content, yesLabel, noLabel, timeout);
+        }
+    }
+
+    _createDialogV13(title, content, yesLabel, noLabel, classes, timeout) {
+        return new Promise((resolve) => {
+            let timerId;
+            let resolved = false;
+
+            const complete = (result) => {
+                if (resolved) return;
+                resolved = true;
+                if (timerId) clearTimeout(timerId);
+                resolve(result);
+            };
+
+            const dialog = new foundry.applications.api.DialogV2({
+                classes: classes,
                 window: {title: title},
                 content: content,
-                yes: { label: yesLabel },
-                no: { label: noLabel },
-                rejectClose: false,
+                buttons: [
+                    { action: 'yes', label: yesLabel, callback: () => {
+                        complete('yes');
+                        dialog.close();
+                    }},
+                    { action: 'no', label: noLabel, callback: () => {
+                        complete('no');
+                        dialog.close();
+                    }}
+                ],
+                default: 'no',
+                close: () => {
+                    complete('no');
+                }
             });
-            return proceed ? "yes" : "no";
-        } else {
-            return new Promise((resolve) => {
-                new Dialog({
-                    title: title,
-                    content: content,
-                    buttons: {
-                        yes: {
-                            icon: '<i class="fas fa-check"></i>',
-                            label: yesLabel,
-                            callback: () => resolve("yes")
-                        },
-                        no: {
-                            icon: '<i class="fas fa-times"></i>',
-                            label: noLabel,
-                            callback: () => resolve("no")
-                        }
-                    },
-                    default: noLabel,
-                    close: () => resolve(noLabel)
-                }).render(true);
-            });
-        }
-    }
 
-    // utilitiy functions
-    
-    /**
-     * Check if an actor is an Abjurer wizard
-     * 
-     * @param {Actor} actor - The actor to check
-     * @returns {boolean} - True if the actor is an Abjurer wizard, false otherwise
-     */
-    isAbjurerWizard(actor) {
-        if (!actor || !actor.classes) return false;
-        
-        const subclass = actor.items.find(item =>  {
-            return item.type === "subclass" && item.name.includes(this.ABJURER_SUBCLASS) ? true : false;
+            dialog.render(true);
+
+            if (timeout) {
+                timerId = setTimeout(() => {
+                    complete('no');
+                    dialog.close();
+                }, timeout * 1000);
+            }
         });
-
-        return subclass;
     }
 
-    /**
-     * Get current Arcane Ward data
-     * 
-     * @param {Actor} actor - The actor to check
-     * @returns {Item} - The Arcane Ward item
-     */
-    getArcaneWard(actor) {
-        if(this.hasArcaneWard(actor)) {
-            return actor.items.find(item => item.type === 'feat' && item.name.includes('Arcane Ward'));
-        }
-        return null;
-    }
+    _createDialogLegacy(title, content, yesLabel, noLabel, timeout) {
+        return new Promise((resolve) => {
+            let timerId;
+            let resolved = false;
 
-    /**
-     * Check if the actor has the Arcane Ward feature
-     * 
-     * @param {Actor} actor - The actor to check
-     * @returns {boolean} - True if the actor has an Arcane Ward, false otherwise
-     */
-    hasArcaneWard(actor) {
-        return actor.items.find(item => item.type === 'feat' && item.name.includes('Arcane Ward')) ? true : false;
-    }
+            const finalResolve = (result) => {
+                if (resolved) return;
+                resolved = true;
+                if (timerId) clearTimeout(timerId);
+                resolve(result);
 
-    /**
-     * Get the Arcane Ward effect
-     * 
-     * @param {Item or Actor} item - The item or actor to check
-     * @returns {ActiveEffect} - The Arcane Ward effect
-     */
-    getArcaneWardEffect(item) {
-        if(this.hasArcaneWardEffect(item)) {
-            return item.effects.find(effect => effect.name === "Arcane Ward");
-        }
-        return null;
-    }
+            };
 
-    /**
-     * Check if the actor has the Arcane Ward effect
-     * 
-     * @param {Actor or Item} item - The actor or item to check
-     * @returns {boolean} - True if the actor has an Arcane Ward effect, false otherwise
-     */
-    hasArcaneWardEffect(item) {
-        return item.effects.find(effect => effect.name === "Arcane Ward") ? true : false;
-    }
+            const dialog = new Dialog({
+                title: title,
+                content: content,
+                buttons: {
+                    yes: {
+                        icon: '<i class="fas fa-check"></i>',
+                        label: yesLabel,
+                        callback: () => finalResolve("yes")
+                    },
+                    no: {
+                        icon: '<i class="fas fa-times"></i>',
+                        label: noLabel,
+                        callback: () => finalResolve("no")
+                    }
+                },
+                default: 'no',
+                close: () => finalResolve('no')
+            });
+            dialog.render(true);
 
-    /**
-     * Get the current HP of the Arcane Ward
-     * 
-     * @param {Actor} actor - The actor to check
-     * @returns {number} - The current HP of the Arcane Ward
-     */
-    getArcaneWardHP(actor) {
-        const ward = this.getArcaneWard(actor);
-        return ward.system.uses.value;
-    }
-
-    /**
-     * Get the maximum HP of the Arcane Ward
-     * 
-     * @param {Actor} actor - The actor to check
-     * @returns {number} - The maximum HP of the Arcane Ward
-     */
-    getArcaneWardHPMax(actor) {
-        const ward = this.getArcaneWard(actor);
-        return ward.system.uses.max;
-    }
-
-    /**
-     * Check if a spell is Abjuration spell
-     * 
-     * @param {Spell} spell - The spell to check
-     * @returns {boolean} - True if the spell is Abjuration, false otherwise
-     */
-    isAbjurationSpell(spell) {
-        if (!spell.system.school) return false;
-        return this.ABJURATION_SCHOOLS.some(school => 
-            spell.system.school.toLowerCase().includes(school)
-        );
+            if (timeout) {
+                timerId = setTimeout(() => dialog.close(), timeout * 1000);
+            }
+        });
     }
 
     /**
@@ -699,83 +646,14 @@ class ArcaneWarding {
      * @param {Actor} target - The target to apply the effect to
      */
     async applyArcaneWardEffect(actor, target) {
-        const effect = this.getArcaneWardEffect(actor);
+        const effect = getArcaneWardEffect(actor);
         if(effect) {
             const newEffect = await target.createEmbeddedDocuments("ActiveEffect", [effect.toObject()]);
-            console.log("newEffect", newEffect);
             if(newEffect) {
                 return true;
             }
         }
         return false;
-    }
-
-    /**
-     * Get the distance between two actors
-     * 
-     * @param {Token} sourceToken - The source token
-     * @param {Token} targetToken - The target token
-     * @param {Object} options - The options for the distance calculation
-     * @param {boolean} options.wallsBlock - Whether to consider walls in the distance calculation
-     * @param {boolean} options.checkCover - Whether to consider cover in the distance calculation
-     * @returns {number} - The distance between the two actors
-     */
-    getDistance(sourceToken, targetToken, {wallsBlock, checkCover} = {}) {
-        return MidiQOL.computeDistance(sourceToken, targetToken, {wallsBlock, includeCover: checkCover});
-    }
-
-    /**
-     * Generate a witty message for the actor
-     * 
-     * @param {Actor} actor - The actor to check
-     * @param {Actor} target - The target of the actor
-     * @param {string} scope - The scope of the message, "firstPerson" or "thirdPerson"
-     * @returns {string} - The witty message
-     */
-    generateWittyMessage(actor, target, scope = "firstPerson") {
-
-        const wittyMessages = this.getFormattedMessages(actor, target);
-
-        const message = wittyMessages[scope][Math.floor(Math.random() * wittyMessages[scope].length)];
-
-        let result = '';
-
-        if(scope === "firstPerson") {
-            result = `<p>${message}.</p>`;
-        } else {
-            result = `<p><strong>${actor.name}</strong> ${message}.</p>`;
-        }
-
-        return result;
-    }
-
-
-    /**
-     * Get the formatted messages for the witty message
-     * 
-     * @param {Actor} actor - The actor to check
-     * @param {Actor} target - The target of the actor
-     * @returns {Object} - The formatted messages
-     */
-    getFormattedMessages(actor, target) {
-
-        const wittyMessagesFirstPerson = game.i18n.translations.ARCANE_WARDING.WITTY_MESSAGES.FIRST_PERSON;
-        const wittyMessagesThirdPerson = game.i18n.translations.ARCANE_WARDING.WITTY_MESSAGES.THIRD_PERSON;
-
-        let formattedMessages = {
-            firstPerson: [],
-            thirdPerson: []
-        };
-
-        Object.keys(wittyMessagesFirstPerson).forEach(key => {
-            formattedMessages['firstPerson'].push(game.i18n.format(wittyMessagesFirstPerson[key], {target: target.name, actor: actor.name}));
-        });
-
-        Object.keys(wittyMessagesThirdPerson).forEach(key => {
-            formattedMessages['thirdPerson'].push(game.i18n.format(wittyMessagesThirdPerson[key], { target: target.name, actor: actor.name }));
-        });
-
-        return formattedMessages;
     }
 
 }

@@ -1,23 +1,60 @@
 export const SOCKET_NAME = 'module.arcane-warding';
 
+export function showBubble(actorId, messageId) {
+    const actor = game.actors.get(actorId);
+    const message = game.messages.get(messageId);
+    if (actor && message) {
+        const token = game.scenes.find(s => s.tokens.find(t => t.actorId === actor.id))?.tokens.find(t => t.actorId === actor.id);
+        if (token) {
+            const tokenObject = canvas.tokens.get(token.id);
+            if (tokenObject) {
+                canvas.hud.bubbles.say(tokenObject, message.content);
+            }
+        }
+    }
+}
+
+export function handleSendMessageRequest(data) {
+    if (game.user.isGM) {
+        ChatMessage.create(data.chatData).then(msg => {
+            if (data.useBubble) {
+                showBubble(data.actorId, msg.id); // GM shows bubble locally
+                game.socket.emit(SOCKET_NAME, {
+                    type: 'sayBubble',
+                    payload: {
+                        messageId: msg.id,
+                        actorId: data.actorId
+                    }
+                });
+            }
+        });
+    }
+}
+
 export function registerSocket() {
-	console.log('%c Arcane Warding | Registering socket', 'color: #00ff00');
     game.socket.on(SOCKET_NAME, (data) => {
-        console.log('%c Arcane Warding | Socket event received', 'color: #00ff00', data);
+        console.log('Arcane Warding | Socket event received', data);
         if (data.type === 'createDialog' && data.user === game.user.id) {
             handleSocketDialog(data.payload);
+        }
+        if (data.type === 'sendMessage') {
+            handleSendMessageRequest(data.payload);
+        }
+        if (data.type === 'sayBubble') {
+            showBubble(data.payload.actorId, data.payload.messageId);
         }
     });
 }
 
 async function handleSocketDialog(data) {
-    console.log('%c Arcane Warding | Handling createDialog socket event', 'color: #00ff00', data);
+    console.log('Arcane Warding | Handling createDialog socket event', data);
     const actor = data.actorId ? game.actors.get(data.actorId) : null;
     const attacker = data.attackerId ? game.actors.get(data.attackerId) : null;
     const target = data.targetId ? game.actors.get(data.targetId) : null;
     const spell = data.spellName ? { name: data.spellName } : null;
+    const timeout = data.timeout || null;
 
-    const result = await game.arcaneWarding.createDialog(spell, data.type, actor, attacker, target, true);
+    const result = await game.arcaneWarding.createDialog(spell, data.type, actor, attacker, target, true, timeout);
     
     game.socket.emit(SOCKET_NAME, {
         type: 'dialogResult',
@@ -27,8 +64,3 @@ async function handleSocketDialog(data) {
         }
     });
 }
-
-// export function registerSocketLib() {
-//     socket = socketlib.registerModule('arcane-warding');
-//     socket.register('createDialog', handleSocketDialog);
-// }

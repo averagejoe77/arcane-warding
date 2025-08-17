@@ -38,3 +38,9 @@
 .arcane-ward-wrap-enabled:hover > .arcane-ward-toggle-icon {
     color: #006600;
 }
+
+/* Dialog styling */
+
+.arcane-warding-dialog {
+    width: 500px;
+}
