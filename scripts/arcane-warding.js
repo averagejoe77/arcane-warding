@@ -100,7 +100,7 @@ class ArcaneWarding {
             }
         } else {
 
-            const sendMsg = Math.random() < 0.5 ? true : false;
+            const sendMsg = workflow._diceRoll === 1 ? true : Math.random() < 0.5 ? true : false;
             
             if(sendMsg) {
                 const msg = generateWittyMessage(targetActor, attacker, "firstPerson");
