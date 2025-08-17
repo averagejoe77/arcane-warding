@@ -26,7 +26,7 @@ jobs:
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git add module.json
           git commit -m "Automated version bump to $TAG_VERSION"
-          git push
+          git push origin HEAD:main
 
       - name: Get Module Info
         id: get_module_info
