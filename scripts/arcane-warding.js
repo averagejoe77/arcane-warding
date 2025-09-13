@@ -472,6 +472,8 @@ class ArcaneWarding {
                 // Find the "Create Ward" activity and apply its effects
                 const createWardActivity = wardFeature.system.activities.find(a => a.name === "Create Ward");
                 if (createWardActivity) {
+                    wardFeature.system.uses.spent = 0;
+                    await wardFeature.update({ "system.uses.spent": 0 });
                     const effect = getArcaneWardEffect(wardFeature);
                     if (effect) {
                         await actor.createEmbeddedDocuments("ActiveEffect", [effect.toObject()]);
