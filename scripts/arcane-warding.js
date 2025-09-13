@@ -20,11 +20,13 @@ class ArcaneWarding {
             // get all the actors
             const actors = game.actors.contents;
             actors.forEach(actor => {
-                if(actor.type === 'character' && isAbjurerWizard(actor, this.ABJURER_SUBCLASS) && !hasArcaneWard(actor)) {
+                let isAbjurer = isAbjurerWizard(actor, this.ABJURER_SUBCLASS);
+                let hasWard = hasArcaneWard(actor);
+                console.log('%cArcane Warding | actor', actor.name, 'isAbjurer', isAbjurer, 'hasWard', hasWard, "color: green");
+                if(actor.type === 'character' && isAbjurer && hasWard) {
                     const wardFeature = getArcaneWard(actor);
                     if(wardFeature) this.createArcaneWard(wardFeature, actor);
                 }
-                
             });
         });
 
@@ -239,6 +241,7 @@ class ArcaneWarding {
      * @param {Actor} actor - The actor that cast the spell
      */
     async createArcaneWard(wardFeature, actor) {
+        console.log("%cArcane Warding | Creating Arcane Ward", "color: green");
         if (!wardFeature) {
             sendMessage(game.i18n.format('ARCANE_WARDING.MISSING_FEATURE'), actor);
             return;
@@ -264,6 +267,8 @@ class ArcaneWarding {
             // After creation, the effect will be on the wardFeature, so we can get it.
             const [createdEffect] = await wardFeature.createEmbeddedDocuments("ActiveEffect", [effectData]);
             effect = createdEffect; // Use the returned created effect
+            console.log("%cArcane Warding | Arcane Ward effect created", "color: green");
+            console.log('%cArcane Warding | effect', effect, "color: yellow");
         }
 
         if (!effect) {
@@ -305,7 +310,7 @@ class ArcaneWarding {
      * @param {Item} wardFeature - The Arcane Ward feature
      * @param {Spell} spell - The spell that was cast
      */
-    async healArcaneWard(wardFeature, spell) {
+    async healArcaneWard(wardFeature, spell, spellLevel) {
 
         const currentSpent = wardFeature.system.uses.spent;
 
@@ -318,8 +323,10 @@ class ArcaneWarding {
             }
         }
 
-        const healAmount = spell.system.level * 2;
-        
+        const healAmount = spellLevel * 2;
+        console.log('%cArcane Warding | Spell level: ', spellLevel, "color: green");
+        console.log('%cArcane Warding | Healing ward for: ', healAmount, "color: green");
+
         const newSpent = Math.max(0, currentSpent - healAmount);
         
         await wardFeature.update({ "system.uses.spent": newSpent });
@@ -436,11 +443,17 @@ class ArcaneWarding {
         if (!isAbjurerWizard(actor, this.ABJURER_SUBCLASS)) return;
 
         const spell = workflow.item;
+        let spellLevel = spell.system.level;
+        if(workflow?.castData?.castLevel !== workflow?.castData?.baseLevel) {
+            // the spell was upcast so we need to update the spell level
+            spellLevel = workflow.castData.castLevel;
+        }
+
         const isAbjSpell = isAbjurationSpell(spell, this.ABJURATION_SCHOOLS);
 
         if (!isAbjSpell) return;
 
-        await this.processAbjurationSpell(actor, spell);
+        await this.processAbjurationSpell(actor, spell, spellLevel);
     }
 
     /**
@@ -449,7 +462,7 @@ class ArcaneWarding {
      * @param {Actor} actor - The actor that cast the spell
      * @param {Spell} spell - The spell that was cast
      */
-    async processAbjurationSpell(actor, spell) {
+    async processAbjurationSpell(actor, spell, spellLevel) {
         const wardFeature = getArcaneWard(actor);
         const hasWardEffect = actor.effects.find(ef => ef.name === game.i18n.format('ARCANE_WARDING.EFFECT_NAME'));
         
@@ -471,12 +484,11 @@ class ArcaneWarding {
             }
         } else {
             // If the ward exists, heal it
-            const spellLevel = spell.system.level;
             if (spellLevel === 0) {
                 return; // Abjuration cantrips do not charge the ward.
             }
 
-            const result = await this.healArcaneWard(wardFeature, spell);
+            const result = await this.healArcaneWard(wardFeature, spell, spellLevel);
 
             if(result.success) {
                 if(useFullMessaging(actor)) {

@@ -108,3 +108,5 @@ This module is provided as-is for use with Foundry VTT. Feel free to modify and 
 **v1.2.9**: Added distance support for v12
 
 **v1.2.10**: Refactor and messaging fixes
+
+**v1.2.13**: Updating the creation of the active effect and the healing when upcasting
