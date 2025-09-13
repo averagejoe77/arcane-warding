@@ -22,7 +22,6 @@ class ArcaneWarding {
             actors.forEach(actor => {
                 let isAbjurer = isAbjurerWizard(actor, this.ABJURER_SUBCLASS);
                 let hasWard = hasArcaneWard(actor);
-                console.log('%cArcane Warding | actor', actor.name, 'isAbjurer', isAbjurer, 'hasWard', hasWard, "color: green");
                 if(actor.type === 'character' && isAbjurer && hasWard) {
                     const wardFeature = getArcaneWard(actor);
                     if(wardFeature) this.createArcaneWard(wardFeature, actor);
