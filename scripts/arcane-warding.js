@@ -18,15 +18,17 @@ class ArcaneWarding {
         Hooks.once('ready', () => {
             this.registerHooks();
             // get all the actors
-            const actors = game.actors.contents;
-            actors.forEach(actor => {
-                let isAbjurer = isAbjurerWizard(actor, this.ABJURER_SUBCLASS);
-                let hasWard = hasArcaneWard(actor);
-                if(actor.type === 'character' && isAbjurer && hasWard) {
-                    const wardFeature = getArcaneWard(actor);
-                    if(wardFeature) this.createArcaneWard(wardFeature, actor);
-                }
-            });
+            if(game.user.isGM) {
+                const actors = game.actors.contents;
+                actors.forEach(actor => {
+                    let isAbjurer = isAbjurerWizard(actor, this.ABJURER_SUBCLASS);
+                    let hasWard = hasArcaneWard(actor);
+                    if(actor.type === 'character' && isAbjurer && hasWard) {
+                        const wardFeature = getArcaneWard(actor);
+                        if(wardFeature) this.createArcaneWard(wardFeature, actor);
+                    }
+                });
+            }
         });
 
     }
@@ -240,17 +242,16 @@ class ArcaneWarding {
      * @param {Actor} actor - The actor that cast the spell
      */
     async createArcaneWard(wardFeature, actor) {
-        console.log("%cArcane Warding | Creating Arcane Ward", "color: green");
         if (!wardFeature) {
             sendMessage(game.i18n.format('ARCANE_WARDING.MISSING_FEATURE'), actor);
             return;
         }
 
-        await wardFeature.update({ "system.uses.spent": 0 });
-
         // --- Effect Handling ---
         let effect = getArcaneWardEffect(wardFeature);
+
         if (!effect) {
+            await wardFeature.update({ "system.uses.spent": 0 });
             const effectData = {
                 name: game.i18n.format('ARCANE_WARDING.EFFECT_NAME'),
                 label: game.i18n.format('ARCANE_WARDING.EFFECT_LABEL'),
@@ -271,7 +272,7 @@ class ArcaneWarding {
         }
 
         if (!effect) {
-            console.error("Arcane Warding | Failed to get or create the effect.");
+            console.error("%cArcane Warding | Failed to get or create the effect.", "color: #ff0000");
             return;
         }
 
@@ -323,8 +324,6 @@ class ArcaneWarding {
         }
 
         const healAmount = spellLevel * 2;
-        console.log('%cArcane Warding | Spell level: ', spellLevel, "color: green");
-        console.log('%cArcane Warding | Healing ward for: ', healAmount, "color: green");
 
         const newSpent = Math.max(0, currentSpent - healAmount);
         
@@ -515,7 +514,6 @@ class ArcaneWarding {
         if (game.user.isGM && owner && owner.id !== game.user.id && !fromSocket) {
             return new Promise((resolve) => {
                 const requestId = foundry.utils.randomID();
-                console.log(`%c Arcane Warding | Emitting createDialog for user ${owner.name} (${owner.id})`, 'color: #00ff00');
                 game.socket.emit(SOCKET_NAME, {
                     type: 'createDialog',
                     user: owner.id,

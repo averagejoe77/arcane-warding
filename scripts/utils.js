@@ -14,10 +14,14 @@ function sendMessage(message, actor, mode = "publicroll", useBubble = false) {
         user: game.user.id,
         content: message,
         speaker: speaker,
-        type: CONST.CHAT_MESSAGE_TYPES.OTHER,
         sound: CONFIG.defaultChatSound
     };
-    ChatMessage.applyRollMode(chatData, mode);
+
+    if (mode === 'emote') {
+        chatData.type = CONST.CHAT_MESSAGE_TYPES.EMOTE;
+    } else {
+        ChatMessage.applyRollMode(chatData, mode);
+    }
 
     const payload = {
         chatData: chatData,
@@ -47,10 +51,10 @@ function isAbjurerWizard(actor, ABJURER_SUBCLASS) {
 	if (!actor || !actor.classes) return false;
 	
 	const subclass = actor.items.find(item =>  {
-		return item.type === "subclass" && item.name.includes(ABJURER_SUBCLASS) ? true : false;
+		return item.type === "subclass" && item.name.includes(ABJURER_SUBCLASS);
 	});
 
-	return subclass;
+	return subclass !== undefined ? true : false;
 }
 
 /**

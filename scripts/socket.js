@@ -10,11 +10,11 @@ export function showBubble(actorId, messageId) {
     const actor = game.actors.get(actorId);
     const message = game.messages.get(messageId);
     if (actor && message) {
-        const token = game.scenes.find(s => s.tokens.find(t => t.actorId === actor.id))?.tokens.find(t => t.actorId === actor.id);
-        if (token) {
-            const tokenObject = canvas.tokens.get(token.id);
-            if (tokenObject) {
-                canvas.hud.bubbles.say(tokenObject, message.content);
+        const tokens = actor.getActiveTokens();
+        if (tokens.length > 0) {
+            const token = tokens[0];
+            if (token) {
+                canvas.hud.bubbles.say(token, message.content);
             }
         }
     }
@@ -29,7 +29,7 @@ export function handleSendMessageRequest(data) {
     if (game.user.isGM) {
         ChatMessage.create(data.chatData).then(msg => {
             if (data.useBubble) {
-                showBubble(data.actorId, msg.id); // GM shows bubble locally
+                showBubble(data.actorId, msg.id);
                 game.socket.emit(SOCKET_NAME, {
                     type: 'sayBubble',
                     payload: {
@@ -47,7 +47,6 @@ export function handleSendMessageRequest(data) {
  */
 export function registerSocket() {
     game.socket.on(SOCKET_NAME, (data) => {
-        console.log('Arcane Warding | Socket event received', data);
         if (data.type === 'createDialog' && data.user === game.user.id) {
             handleSocketDialog(data.payload);
         }
@@ -66,7 +65,6 @@ export function registerSocket() {
  * @param {Object} data - The data for the socket dialog request
  */
 async function handleSocketDialog(data) {
-    console.log('Arcane Warding | Handling createDialog socket event', data);
     const actor = data.actorId ? game.actors.get(data.actorId) : null;
     const attacker = data.attackerId ? game.actors.get(data.attackerId) : null;
     const target = data.targetId ? game.actors.get(data.targetId) : null;
