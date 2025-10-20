@@ -26,23 +26,21 @@ Like most modules, find it in the module directory in Foundry, or use the manife
 The module automatically detects if an actor is:
 
 - A wizard class character
-- Has the Abjurer subclass or the School of Abjuration
+- Has the Abjurer subclass (this may not work for a D&D5e 2014 actor)
 
 ### Spell Casting Monitoring
 
 When a spell is cast, the module:
 
-1. Checks if the caster is an Abjurer wizard or in the School of Abjuration
+1. Checks if the caster is an Abjurer wizard
 2. Determines if the spell is an Abjuration spell
-3. If it's an Abjuration spell, ask if the user would like to create the Arcane Ward if it is not already active
-   1. heal the ward for 2x the spell level is the ward is already active
+3. If it's an Abjuration spell, processes the Arcane Ward mechanics
 
 ### Arcane Ward Mechanics
 
 - **Max HP**: Wizard level + Intelligence modifier
 - **Healing**: Spell level × 2 HP restored to the ward when an Abjuraton spell is cast and the ward is active
 - **Overhealing**: "I don't think so Tim." If healing would exceed max HP, only heals up to the maximum
-- **NOT IMPLEMENTED**: Healing the ward by expending a spell slot without casting a spell. Spell slots are "game mechanic" and do not fall into the real of "how would this work if it were real" which is a basic tenent that I have built this on. If I find that users want the feature added or I find that is would be super useful in actual gameplay, I will look at adding it later
 
 ### User Interface
 
@@ -59,12 +57,12 @@ The module works automatically once enabled. When an Abjurer wizard casts an Abj
 1. If no Arcane Ward exists, a dialog appears asking if they want to create one
 2. If they choose yes, the ward is created with max HP = wizard level + INT modifier
 3. Subsequent Abjuration spell casts heal the ward for (spell level × 2) HP
-4. A chat message indicates that the ward has been healed or has absorbed damage
+4. A chat message indicates that the ward has been healed
 
 ### Visual Indicators
 
 - With bars enabled on a token, the blue bar shows current ward health without numeric values
-- When using the D&D5e PHB version of the class feature, the character sheet displays the wards HP as it's uses
+- When using the D&D5e PHB version of the class feature, the chracter sheet displays the wards HP as it's uses
 
 ## Technical Details
 
@@ -83,7 +81,6 @@ Also, there is a section in the language files for "WITTY_MESSAGES". You can add
 - Foundry VTT v12+
 - D&D 5e system
 - Midi-QOL
-  - In order for the automatic damage to apply to the ward, you must enable `Auto apply damage to target` in the Midi-QOL Configuration -> Workflow -> Damage section of the Midi-QOL confifguration settings.
 - DAE
 - Visual Active Effects
 
