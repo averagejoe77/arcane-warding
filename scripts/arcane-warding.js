@@ -8,7 +8,7 @@ import { registerSocket, SOCKET_NAME } from './socket.js';
 class ArcaneWarding {
     constructor() {
         this.ABJURATION_SCHOOLS = ['abjuration', 'abj'];
-        this.ABJURER_SUBCLASS = 'Abjurer';
+        this.ABJURER_SUBCLASS = ['Abjurer', 'School of Abjuration'];
         this.langs = {};
         this.initialize();
     }
@@ -267,8 +267,7 @@ class ArcaneWarding {
             // After creation, the effect will be on the wardFeature, so we can get it.
             const [createdEffect] = await wardFeature.createEmbeddedDocuments("ActiveEffect", [effectData]);
             effect = createdEffect; // Use the returned created effect
-            console.log("%cArcane Warding | Arcane Ward effect created", "color: green");
-            console.log('%cArcane Warding | effect', effect, "color: yellow");
+            console.log(`%cArcane Warding | Arcane Ward effect created for ${actor.name}.`, "color: #00ff00");
         }
 
         if (!effect) {
@@ -278,10 +277,17 @@ class ArcaneWarding {
 
         // --- Activity Handling ---
         const activities = foundry.utils.deepClone(wardFeature.system.activities);
-        const createWardActivity = activities.find(activity => activity.name === "Create Ward");
+
+        let createWardActivity = null;
+
+        if(wardFeature.system._source.source.rules === '2014') {
+            createWardActivity = activities.find(activity => activity.name === "Midi Use");
+        } else {
+            createWardActivity = activities.find(activity => activity.name === "Create Ward");
+        }
 
         if (!createWardActivity) {
-            console.log(`%cArcane Ward | Missing 'Create Ward' activity.`, "color: #ff0000");
+            console.log(`%cArcane Ward | Missing 'Create Ward' activity for ${actor.name}.`, "color: #ff0000");
             return;
         }
 
@@ -301,6 +307,7 @@ class ArcaneWarding {
         } else {
             console.log(`%cArcane Ward | Effect already linked to 'Create Ward' activity for ${actor.name}.`, "color: #ffff00");
         }
+        return;
     }
 
 
@@ -469,7 +476,13 @@ class ArcaneWarding {
             const result = await this.createDialog(spell, "ARCANE_WARD", actor);
             if(result === 'yes') {
                 // Find the "Create Ward" activity and apply its effects
-                const createWardActivity = wardFeature.system.activities.find(a => a.name === "Create Ward");
+                let createWardActivity = null;
+                if(wardFeature.system._source.source.rules === '2014') {
+                    createWardActivity = wardFeature.system.activities.find(a => a.name === "Midi Use");
+                } else {
+                    createWardActivity = wardFeature.system.activities.find(a => a.name === "Create Ward");
+                }
+
                 if (createWardActivity) {
                     wardFeature.system.uses.spent = 0;
                     await wardFeature.update({ "system.uses.spent": 0 });

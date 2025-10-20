@@ -51,7 +51,7 @@ function isAbjurerWizard(actor, ABJURER_SUBCLASS) {
 	if (!actor || !actor.classes) return false;
 	
 	const subclass = actor.items.find(item =>  {
-		return item.type === "subclass" && item.name.includes(ABJURER_SUBCLASS);
+		return item.type === "subclass" && ABJURER_SUBCLASS.includes(item.name);
 	});
 
 	return subclass !== undefined ? true : false;
