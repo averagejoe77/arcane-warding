@@ -1,6 +1,6 @@
 # Arcane Warding Module for Foundry VTT
 
-A Foundry VTT module that automates the Abjurer wizard's Arcane Ward feature from D&D5e 2014 and 2024.
+A Foundry VTT module that automates the Abjurer wizard's Arcane Ward feature from D&D5e 2024 (should also work for 2014 - not tested).
 
 ## General philosophy around the feature and why this module was created
 
@@ -8,7 +8,7 @@ According to RAW, the caster can choose to activate the ward when casting an Abj
 
 ## Features
 
-- **Automatic Detection**: Detects when an actor is a wizard with the Abjurer subclass or the School of Abjuration subclass for 2014
+- **Automatic Detection**: Detects when an actor is a wizard with the Abjurer subclass (this may not work in 2014)
 - **Spell Monitoring**: Automatically detects when Abjuration spells are cast
 - **Smart Healing**: Calculates healing as spell level × 2 and applies it to the ward
 - **Visual Feedback**: Shows ward icon when active (requires DAE and Visual Active Effects) and provides chat notifications for ward activities
@@ -113,5 +113,3 @@ This module is provided as-is for use with Foundry VTT. Feel free to modify and 
 **v1.2.10**: Refactor and messaging fixes
 
 **v1.2.13**: Updating the creation of the active effect and the healing when upcasting
-
-**v1.2.17**: Added support for 2014
