@@ -123,7 +123,7 @@ class ArcaneWarding {
     async handleProjectedWardDamage(token, {workflow, ditem}) {
         const attacker = workflow.actor;
 
-        const target = game.actors.get(ditem.actorId);
+        const target = token.actor || (canvas.tokens ? canvas.tokens.get(ditem.tokenId)?.actor : null) || game.actors.get(ditem.actorId);
 
         const actors = getActorsWithProjectedWard();
         for(const actor of actors) {
