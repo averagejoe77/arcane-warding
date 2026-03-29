@@ -576,7 +576,7 @@ class ArcaneWarding {
         const noLabel = game.i18n.format('ARCANE_WARDING.LABEL_NO');
 
         if (game.release.generation >= 13) {
-            return this._createDialogV13(title, content, yesLabel, noLabel, classes, timeout);
+            return this._createDialog(title, content, yesLabel, noLabel, classes, timeout);
         } else {
             return this._createDialogLegacy(title, content, yesLabel, noLabel, timeout);
         }
@@ -593,7 +593,7 @@ class ArcaneWarding {
      * @param {number} timeout - The timeout for the dialog
      * @returns {Promise<string>} The result of the dialog
      */
-    _createDialogV13(title, content, yesLabel, noLabel, classes, timeout) {
+    _createDialog(title, content, yesLabel, noLabel, classes, timeout) {
         return new Promise((resolve) => {
             let timerId;
             let resolved = false;
