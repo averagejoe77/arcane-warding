@@ -522,9 +522,14 @@ class ArcaneWarding {
      * @param {boolean} fromSocket - Whether the dialog is being created from a socket
      */
     async createDialog(spell = null, type = "ARCANE_WARD", actor = null, attacker = null, target = null, fromSocket = false, timeout = null) {
-        const owner = actor ? game.users.find(u => u.character?.id === actor.id && u.active && !u.isGM) : game.user;
+        let owner = actor ? game.users.find(u => u.character?.id === actor.id && u.active && !u.isGM) : game.user;
 
-        if (game.user.isGM && owner && owner.id !== game.user.id && !fromSocket) {
+        // If an actor is provided but no active player owner is found, route to an active GM instead
+        if (actor && !owner) {
+            owner = game.users.find(u => u.isGM && u.active);
+        }
+
+        if (owner && owner.id !== game.user.id && !fromSocket) {
             return new Promise((resolve) => {
                 const requestId = foundry.utils.randomID();
                 game.socket.emit(SOCKET_NAME, {
@@ -694,14 +699,137 @@ class ArcaneWarding {
     async applyArcaneWardEffect(actor, target) {
         const effect = getArcaneWardEffect(actor);
         if(effect) {
-            const newEffect = await target.createEmbeddedDocuments("ActiveEffect", [effect.toObject()]);
-            if(newEffect) {
-                return true;
+            if (target.isOwner || game.user.isGM) {
+                const newEffect = await target.createEmbeddedDocuments("ActiveEffect", [effect.toObject()]);
+                if(newEffect) return true;
+            } else {
+                return new Promise((resolve) => {
+                    const requestId = foundry.utils.randomID();
+                    game.socket.emit(SOCKET_NAME, {
+                        type: 'applyEffect',
+                        payload: {
+                            targetUuid: target.uuid,
+                            effectData: effect.toObject(),
+                            requestId: requestId
+                        }
+                    });
+
+                    let resolved = false;
+                    const listener = (data) => {
+                        if (data.type === 'applyEffectResult' && data.payload.requestId === requestId) {
+                            if (!resolved) {
+                                resolved = true;
+                                game.socket.off(SOCKET_NAME, listener);
+                                resolve(data.payload.success);
+                            }
+                        }
+                    };
+                    game.socket.on(SOCKET_NAME, listener);
+
+                    // Fallback timeout in case no GM is connected to apply the effect
+                    setTimeout(() => {
+                        if (!resolved) {
+                            resolved = true;
+                            game.socket.off(SOCKET_NAME, listener);
+                            console.warn("Arcane Warding | Timed out waiting for GM to apply Arcane Ward effect.");
+                            resolve(false);
+                        }
+                    }, 5000);
+                });
             }
         }
         return false;
     }
 
+    /**
+     * Update an item safely, routing through GM if the user lacks ownership
+     * 
+     * @param {Item} item - The item to update
+     * @param {Object} updates - The updates to apply
+     */
+    async updateItemSafe(item, updates) {
+        if (item.isOwner || game.user.isGM || (item.actor && item.actor.isOwner)) {
+            await item.update(updates);
+            return true;
+        } else {
+            return new Promise((resolve) => {
+                const requestId = foundry.utils.randomID();
+                game.socket.emit(SOCKET_NAME, {
+                    type: 'updateItem',
+                    payload: {
+                        itemUuid: item.uuid,
+                        updates: updates,
+                        requestId: requestId
+                    }
+                });
+
+                let resolved = false;
+                const listener = (data) => {
+                    if (data.type === 'updateItemResult' && data.payload.requestId === requestId) {
+                        if (!resolved) {
+                            resolved = true;
+                            game.socket.off(SOCKET_NAME, listener);
+                            resolve(data.payload.success);
+                        }
+                    }
+                };
+                game.socket.on(SOCKET_NAME, listener);
+
+                setTimeout(() => {
+                    if (!resolved) {
+                        resolved = true;
+                        game.socket.off(SOCKET_NAME, listener);
+                        console.warn("Arcane Warding | Timed out waiting for GM to update item.");
+                        resolve(false);
+                    }
+                }, 5000);
+            });
+        }
+    }
+
+    /**
+     * Delete an effect safely, routing through GM if the user lacks ownership
+     * 
+     * @param {ActiveEffect} effect - The effect to delete
+     */
+    async deleteEffectSafe(effect) {
+        if (effect.isOwner || game.user.isGM || (effect.parent && effect.parent.isOwner)) {
+            await effect.delete();
+            return true;
+        } else {
+            return new Promise((resolve) => {
+                const requestId = foundry.utils.randomID();
+                game.socket.emit(SOCKET_NAME, {
+                    type: 'deleteEffect',
+                    payload: {
+                        effectUuid: effect.uuid,
+                        requestId: requestId
+                    }
+                });
+
+                let resolved = false;
+                const listener = (data) => {
+                    if (data.type === 'deleteEffectResult' && data.payload.requestId === requestId) {
+                        if (!resolved) {
+                            resolved = true;
+                            game.socket.off(SOCKET_NAME, listener);
+                            resolve(data.payload.success);
+                        }
+                    }
+                };
+                game.socket.on(SOCKET_NAME, listener);
+
+                setTimeout(() => {
+                    if (!resolved) {
+                        resolved = true;
+                        game.socket.off(SOCKET_NAME, listener);
+                        console.warn("Arcane Warding | Timed out waiting for GM to delete effect.");
+                        resolve(false);
+                    }
+                }, 5000);
+            });
+        }
+    }
 }
 
 // Initialize the module

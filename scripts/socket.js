@@ -56,7 +56,94 @@ export function registerSocket() {
         if (data.type === 'sayBubble') {
             showBubble(data.payload.actorId, data.payload.messageId);
         }
+        if (data.type === 'applyEffect') {
+            handleApplyEffect(data.payload);
+        }
+        if (data.type === 'updateItem') {
+            handleUpdateItem(data.payload);
+        }
+        if (data.type === 'deleteEffect') {
+            handleDeleteEffect(data.payload);
+        }
     });
+}
+
+/**
+ * Handle an item update request
+ * 
+ * @param {Object} data - The data for the item update request
+ */
+async function handleUpdateItem(data) {
+    if (game.user.isGM) {
+        const item = await fromUuid(data.itemUuid);
+        if (item) {
+            try {
+                await item.update(data.updates);
+                game.socket.emit(SOCKET_NAME, {
+                    type: 'updateItemResult',
+                    payload: { success: true, requestId: data.requestId }
+                });
+            } catch (error) {
+                game.socket.emit(SOCKET_NAME, {
+                    type: 'updateItemResult',
+                    payload: { success: false, requestId: data.requestId }
+                });
+            }
+        }
+    }
+}
+
+/**
+ * Handle an effect deletion request
+ * 
+ * @param {Object} data - The data for the effect deletion request
+ */
+async function handleDeleteEffect(data) {
+    if (game.user.isGM) {
+        const effect = await fromUuid(data.effectUuid);
+        if (effect) {
+            try {
+                await effect.delete();
+                game.socket.emit(SOCKET_NAME, {
+                    type: 'deleteEffectResult',
+                    payload: { success: true, requestId: data.requestId }
+                });
+            } catch (error) {
+                game.socket.emit(SOCKET_NAME, {
+                    type: 'deleteEffectResult',
+                    payload: { success: false, requestId: data.requestId }
+                });
+            }
+        }
+    }
+}
+
+/**
+ * Handle an apply effect request
+ * 
+ * @param {Object} data - The data for the apply effect request
+ */
+async function handleApplyEffect(data) {
+    if (game.user.isGM) {
+        const target = await fromUuid(data.targetUuid);
+        if (target) {
+            try {
+                const newEffect = await target.createEmbeddedDocuments("ActiveEffect", [data.effectData]);
+                game.socket.emit(SOCKET_NAME, {
+                    type: 'applyEffectResult',
+                    payload: {
+                        success: !!newEffect,
+                        requestId: data.requestId
+                    }
+                });
+            } catch (error) {
+                game.socket.emit(SOCKET_NAME, {
+                    type: 'applyEffectResult',
+                    payload: { success: false, requestId: data.requestId }
+                });
+            }
+        }
+    }
 }
 
 /**
