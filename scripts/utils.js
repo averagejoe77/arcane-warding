@@ -306,6 +306,11 @@ function shouldSkip(actor, target, attacker) {
 		skip = true;
 	}
 
+	// if the actor's reaction has already been used this round, skip the rest of the loop
+	if(game.modules.get("midi-qol").api.hasUsedReaction(actor)) {
+		skip = true;
+	}
+
 	// if the actor is the attacker, skip the rest of the loop
 	if(actor === attacker) {
 		skip = true;

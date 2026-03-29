@@ -140,13 +140,17 @@ class ArcaneWarding {
 
             const newWardHP = currentWardHP - damageToAbsorb;
             const newSpent = wardFeature.system.uses.max - newWardHP;
-            await wardFeature.update({ "system.uses.spent": newSpent });
+            await this.updateItemSafe(wardFeature, { "system.uses.spent": newSpent });
 
             // remove the arcane ward effect from the target
             const targetEffect = target.effects.find(ef => ef.name === game.i18n.format('ARCANE_WARDING.EFFECT_NAME'));
+            console.log(`%cArcane Warding | Found Effect on target in handleProjectedWardDamage: ${targetEffect.name}`, "color: green");
             if(targetEffect) {
-                await targetEffect.delete();
+                await this.deleteEffectSafe(targetEffect);
             }
+
+            // update the actor's reaction as used as tracked by midiqol
+            game.modules.get("midi-qol").api.setReactionUsed(actor, true);
 
             let message = game.i18n.format('ARCANE_WARDING.PROJECTED_WARD_ABSORBED_BASE', { actor: actor.name, target: target.name, attacker: attacker.name });
 
@@ -379,7 +383,7 @@ class ArcaneWarding {
         const newWardHP = currentWardHP - damageToAbsorb;
         const newSpent = wardFeature.system.uses.max - newWardHP;
 
-        await wardFeature.update({ "system.uses.spent": newSpent });
+        await this.updateItemSafe(wardFeature, { "system.uses.spent": newSpent });
 
         let message = game.i18n.format('ARCANE_WARDING.ABSORBED_MESSAGE_BASE', { actor: actor.name, amount: Math.ceil(damageToAbsorb) });
 
