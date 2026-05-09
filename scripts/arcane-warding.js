@@ -264,8 +264,9 @@ class ArcaneWarding {
                 origin: wardFeature.uuid,
                 disabled: false,
                 transfer: false,
+                showIcon: 1,
                 flags: {
-                    dae: { showIcon: true, specialDuration: ["longRest"] }
+                    dae: { specialDuration: ["longRest"] }
                 }
             };
             // After creation, the effect will be on the wardFeature, so we can get it.

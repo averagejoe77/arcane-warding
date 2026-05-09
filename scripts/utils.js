@@ -16,9 +16,15 @@ function sendMessage(message, actor, mode = "publicroll", useBubble = false) {
         speaker: speaker,
         sound: CONFIG.defaultChatSound
     };
+	const version = game.release.generation;
 
     if (mode === 'emote') {
-        chatData.type = CONST.CHAT_MESSAGE_TYPES.EMOTE;
+		// v13 is CONST.CHAT_MESSAGE_TYPES.EMOTE, v14 is CONST.CHAT_MESSAGE_STYLES.EMOTE
+		if(version >= 14) {
+			chatData.type = CONST.CHAT_MESSAGE_STYLES.EMOTE;
+		} else {
+			chatData.type = CONST.CHAT_MESSAGE_TYPES.EMOTE;
+		}
     } else {
         ChatMessage.applyRollMode(chatData, mode);
     }

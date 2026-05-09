@@ -12,7 +12,7 @@
   ],
   "compatibility": {
     "minimum": "12.343",
-    "verified": "13"
+    "verified": "14"
   },
   "relationships": {
     "systems": [
@@ -31,7 +31,7 @@
         "type": "module",
         "compatibility": {
           "minimum": "12.4.64",
-          "verified": "13.9.99"
+          "verified": "14"
         }
       },
       {
@@ -39,7 +39,7 @@
         "type": "module",
         "compatibility": {
           "minimum": "12.0.29",
-          "verified": "13.9.99"
+          "verified": "14"
         }
       },
       {
@@ -47,7 +47,7 @@
         "type": "module",
         "compatibility": {
           "minimum": "12.1.5",
-          "verified": "13.9.99"
+          "verified": "14"
         }
       },
       {
