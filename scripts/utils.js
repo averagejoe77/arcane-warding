@@ -19,9 +19,9 @@ function sendMessage(message, actor, mode = "publicroll", useBubble = false) {
 	const version = game.release.generation;
 
     if (mode === 'emote') {
-		// v13 is CONST.CHAT_MESSAGE_TYPES.EMOTE, v14 is CONST.CHAT_MESSAGE_STYLES.EMOTE
+		// v14 renamed the ChatMessage field from "type" to "style" (CONST.CHAT_MESSAGE_STYLES.EMOTE)
 		if(version >= 14) {
-			chatData.type = CONST.CHAT_MESSAGE_STYLES.EMOTE;
+			chatData.style = CONST.CHAT_MESSAGE_STYLES.EMOTE;
 		} else {
 			chatData.type = CONST.CHAT_MESSAGE_TYPES.EMOTE;
 		}
