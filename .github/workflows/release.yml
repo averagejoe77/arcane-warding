@@ -53,7 +53,7 @@ jobs:
 
       - name: Package Module
         run: |
-          zip -r module.zip lang/ module.json scripts/ styles/ README.md LICENSE
+          zip -r module.zip lang/ module.json scripts/ styles/ assets/ README.md LICENSE
 
       - name: Upload Release Asset
         id: upload-release-asset
