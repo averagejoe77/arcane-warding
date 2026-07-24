@@ -1,3 +1,7 @@
+![Latest Downloads](https://dungeonsandderps.com/badges/badge.php?repo=arcane-warding&type=downloads)
+![Current Version](https://dungeonsandderps.com/badges/badge.php?repo=arcane-warding&type=version)
+![Foundry Compatibility](https://dungeonsandderps.com/badges/badge.php?repo=arcane-warding&type=foundry)
+
 # Arcane Warding Module for Foundry VTT
 
 A Foundry VTT module that automates the Abjurer wizard's Arcane Ward feature from D&D5e 2014 and 2024.

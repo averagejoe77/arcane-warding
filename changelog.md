@@ -2,7 +2,32 @@
 
 All notable changes to the Arcane Warding module will be documented in this file.
 
-## [Unreleased] / Recent Updates (2026-03-29)
+## [1.2.25] - 2026-07-23
+
+### Added
+- **Stat Tracking**: The readme now uses my own custom stat tracker becasue third party ones kept failing.
+- **Update Chat Messages**: I know I hate them too, but after looking at the stats for this module, I figured I should I add a little notification to let you know that an update exists, so you can get the latest fixes/features.
+- **Custom Ward Icon**: This was silly and not realyl something I wanted to do, but you can blame v14 for this as the icon I was using was no longer availble at the same path as v13. So, I made my own icon so the path will not change in future releases.
+
+### Fixed
+- **v14 Emote Messages**: Fixed a validation error (`type "3" is not a valid type for the ChatMessage Document class`) thrown when Projected Ward sent an "emote" chat message under Foundry v14. v14 moved the old numeric message type to a new `style` field, separate from the document's string `type` sub-type field.
+- **v14 Effect Application and Removal**: Fixed the Projected Ward applying and removing the Arcane Ward effect from the target of an attack in v14.
+- **v14 Arcane Ward not being removed on long rest**: Again why keep data models the same when you can change them and break the entire ecosystem, am I right Foundry?
+
+---
+
+## [1.2.24] - 2026-05-08
+
+### Changed
+- **Foundry v14 Support**: Bumped verified compatibility for Foundry, Midi-QOL, DAE, and Visual Active Effects to v14.
+- **Active Effect Icon Display**: Switched the Arcane Ward effect to use the core `showIcon` flag instead of the DAE-specific `showIcon` flag, aligning with DAE's v14 behavior.
+
+### Fixed
+- **Emote Chat Messages**: Added a version-aware branch so emote-mode messages set `CONST.CHAT_MESSAGE_STYLES.EMOTE` on v14 and `CONST.CHAT_MESSAGE_TYPES.EMOTE` on v13 and earlier. (Later found to still need the `style`/`type` field split above.)
+
+---
+
+## [1.2.23] - 2026-03-29
 
 ### Added
 - **Socket Infrastructure**: Added new socket handlers (`applyEffect`, `updateItem`, `deleteEffect`) allowing players to securely delegate actions requiring elevated privileges to the Game Master's client.
