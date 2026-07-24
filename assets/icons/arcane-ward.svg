@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <radialGradient id="aw-bg" cx="50%" cy="48%" r="65%">
+      <stop offset="0%" stop-color="#1b2a4a"/>
+      <stop offset="60%" stop-color="#0d1526"/>
+      <stop offset="100%" stop-color="#05070d"/>
+    </radialGradient>
+
+    <linearGradient id="aw-shield" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#152238"/>
+      <stop offset="55%" stop-color="#0a1220"/>
+      <stop offset="100%" stop-color="#050810"/>
+    </linearGradient>
+
+    <radialGradient id="aw-flare" cx="50%" cy="48%" r="52%">
+      <stop offset="0%" stop-color="#ffe28a" stop-opacity="0.95"/>
+      <stop offset="35%" stop-color="#ffd24d" stop-opacity="0.55"/>
+      <stop offset="70%" stop-color="#f2b400" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#f2b400" stop-opacity="0"/>
+    </radialGradient>
+
+    <filter id="aw-soft-glow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="2.4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <filter id="aw-strong-glow" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- background vignette -->
+  <rect x="0" y="0" width="100" height="100" fill="url(#aw-bg)"/>
+
+  <!-- outer flame-like aura burst (yellow/gold) -->
+  <g filter="url(#aw-strong-glow)" opacity="0.9">
+    <path fill="#ffcf40" d="M50 4
+      L56 18 L68 8 L66 24 L82 18 L74 32 L92 32 L76 42
+      L94 50 L76 55 L90 68 L72 62 L78 82 L62 68
+      L58 88 L50 70 L42 88 L38 68 L22 82 L28 62
+      L10 68 L24 55 L6 50 L24 42 L8 32 L26 32 L18 18
+      L34 24 L32 8 L44 18 Z"/>
+  </g>
+
+  <!-- soft blue ring aura -->
+  <g filter="url(#aw-soft-glow)" opacity="0.75">
+    <circle cx="50" cy="52" r="33" fill="none" stroke="#5ec8ff" stroke-width="3"/>
+  </g>
+
+  <!-- radial flare wash behind shield -->
+  <circle cx="50" cy="50" r="46" fill="url(#aw-flare)"/>
+
+  <!-- shield body -->
+  <path d="M50 10
+    L80 21 L80 48
+    C80 71 67 85 50 93
+    C33 85 20 71 20 48
+    L20 21 Z"
+    fill="url(#aw-shield)" stroke="#02040a" stroke-width="2.5"/>
+
+  <!-- shield rim highlight -->
+  <path d="M50 13.5
+    L76.5 23.5 L76.5 48
+    C76.5 69 65 82 50 89.5
+    C35 82 23.5 69 23.5 48
+    L23.5 23.5 Z"
+    fill="none" stroke="#3f7fb8" stroke-width="1.2" opacity="0.55"/>
+
+  <!-- arcane rune: three linked rings forming a warding sigil -->
+  <g filter="url(#aw-soft-glow)" fill="none" stroke="#bfeaff" stroke-width="2" opacity="0.95">
+    <circle cx="50" cy="34" r="6"/>
+    <circle cx="36" cy="56" r="6"/>
+    <circle cx="64" cy="56" r="6"/>
+
+    <path d="M45 38 C40 44 38 48 38 50" stroke-width="1.6"/>
+    <path d="M55 38 C60 44 62 48 62 50" stroke-width="1.6"/>
+    <path d="M42 58 C46 62 54 62 58 58" stroke-width="1.6"/>
+
+    <path d="M50 40 L61 58 L39 58 Z" stroke-width="1.4" opacity="0.85"/>
+  </g>
+
+  <!-- center glint -->
+  <circle cx="50" cy="50" r="2.2" fill="#eaf7ff" opacity="0.9" filter="url(#aw-soft-glow)"/>
+</svg>

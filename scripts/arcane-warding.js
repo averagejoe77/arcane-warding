@@ -254,24 +254,33 @@ class ArcaneWarding {
         // --- Effect Handling ---
         let effect = getArcaneWardEffect(wardFeature);
 
+        const imagePath = "modules/arcane-warding/assets/icons/arcane-ward.svg";
+
         if (!effect) {
             await wardFeature.update({ "system.uses.spent": 0 });
             const effectData = {
                 name: game.i18n.format('ARCANE_WARDING.EFFECT_NAME'),
                 label: game.i18n.format('ARCANE_WARDING.EFFECT_LABEL'),
                 description: wardFeature.system.description.value,
-                icon: "icons/magic/defensive/shield-barrier-flaming-pentagon-blue-yellow.webp",
                 origin: wardFeature.uuid,
                 disabled: false,
                 transfer: false,
-                showIcon: 1,
                 flags: {
-                    dae: { specialDuration: ["longRest"] }
+                    dae: { specialDuration: ["longRest"], showIcon: true }
                 }
             };
+            //v13 uses icon and v14 uses img - why foundry why?
+            if (game.version >= 14) {
+                effectData.showIcon = 2;
+                effectData.img = imagePath;
+            } else {
+                effectData.showIcon = 1;
+                effectData.icon = imagePath;
+            }
             // After creation, the effect will be on the wardFeature, so we can get it.
             const [createdEffect] = await wardFeature.createEmbeddedDocuments("ActiveEffect", [effectData]);
             effect = createdEffect; // Use the returned created effect
+            console.log(`Arcane Warding | Arcane Ward effect created.`, effect);
             console.log(`%cArcane Warding | Arcane Ward effect created for ${actor.name}.`, "color: #00ff00");
         }
 
