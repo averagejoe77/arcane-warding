@@ -1,4 +1,4 @@
-import { sendMessage, isAbjurerWizard, getArcaneWard, hasArcaneWard, getArcaneWardEffect, hasArcaneWardEffect, getArcaneWardHP, isAbjurationSpell, generateWittyMessage, generateWittyMessagePW, shouldSkip, getActorsWithProjectedWard, useFullMessaging } from './utils.js';
+import { sendMessage, isAbjurerWizard, getArcaneWard, hasArcaneWard, getArcaneWardEffect, hasArcaneWardEffect, getArcaneWardHP, isAbjurationSpell, generateWittyMessage, generateWittyMessagePW, shouldSkip, getActorsWithProjectedWard, useFullMessaging, checkForUpdates } from './utils.js';
 import { registerSocket, SOCKET_NAME } from './socket.js';
 
 /**
@@ -19,6 +19,7 @@ class ArcaneWarding {
             this.registerHooks();
             // get all the actors
             if(game.user.isGM) {
+                checkForUpdates();
                 const actors = game.actors.contents;
                 actors.forEach(actor => {
                     let isAbjurer = isAbjurerWizard(actor, this.ABJURER_SUBCLASS);
@@ -852,6 +853,13 @@ class ArcaneWarding {
 
 // Initialize the module
 Hooks.once('init', () => {
+    game.settings.register('arcane-warding', 'lastNotifiedVersion', {
+        scope: 'world',
+        config: false,
+        type: String,
+        default: ''
+    });
+
     game.arcaneWarding = new ArcaneWarding();
     registerSocket();
-}); 
+});

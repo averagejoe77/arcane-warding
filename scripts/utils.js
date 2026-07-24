@@ -336,6 +336,48 @@ function useFullMessaging(actor) {
 	return wardFeature.flags?.arcaneWarding?.fullMessaging;
 }
 
+/**
+ * Compare the installed module version against the latest release and
+ * whisper the GM if an update is available. Only ever notifies once per new
+ * version so it doesn't nag on every reload.
+ *
+ * The version check is proxied through a small endpoint on our own domain
+ * (rather than calling the GitHub API directly) so no GitHub token ever has
+ * to ship inside the module. Expected response shape: { "version": "1.2.25" }
+ */
+async function checkForUpdates() {
+	if (!game.user.isGM) return;
+
+	const currentVersion = game.modules.get('arcane-warding').version;
+
+	let latestVersion;
+	try {
+		const response = await fetch('https://www.dungeonsandderps.com/foundry-modules/update-check.php?module=arcane-warding');
+		if (!response.ok) {
+			console.warn(`Arcane Warding | Update check failed: ${response.status} ${response.statusText}`);
+			return;
+		}
+		const data = await response.json();
+		latestVersion = data.version;
+		if (!latestVersion) return;
+	} catch (err) {
+		console.warn('Arcane Warding | Unable to check for updates.', err);
+		return;
+	}
+
+	if (!foundry.utils.isNewerVersion(latestVersion, currentVersion)) return;
+
+	// Already notified for this version, don't nag again
+	if (game.settings.get('arcane-warding', 'lastNotifiedVersion') === latestVersion) return;
+
+	await ChatMessage.create({
+		content: game.i18n.format('ARCANE_WARDING.UPDATE_AVAILABLE', { currentVersion, latestVersion }),
+		whisper: [game.user.id]
+	});
+
+	game.settings.set('arcane-warding', 'lastNotifiedVersion', latestVersion);
+}
+
 export { 
 	sendMessage, 
 	isAbjurerWizard, 
@@ -352,5 +394,6 @@ export {
 	generateWittyMessage,
 	generateWittyMessagePW,
 	shouldSkip,
-	useFullMessaging
+	useFullMessaging,
+	checkForUpdates
 };
