@@ -446,6 +446,10 @@ class ArcaneWarding {
      */
     async onRestCompleted(actor, data) {
         if(hasArcaneWardEffect(actor) && data.type === 'long' && useFullMessaging(actor)) {
+            // v14 needs to remove the Arcane Ward ActiveEffect document from the acrtor, as it is no longer done automatically
+            if(game.release.generation >= 14) {
+                await actor.deleteEmbeddedDocuments('ActiveEffect', [getArcaneWardEffect(actor).id]);
+            }
             sendMessage(game.i18n.format('ARCANE_WARDING.LONG_REST', { actor: actor.name }), actor);
         }
     }
