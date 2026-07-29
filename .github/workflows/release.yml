@@ -11,10 +11,10 @@ jobs:
       contents: write
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Use Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 20
 
@@ -38,44 +38,22 @@ jobs:
           echo "version=$MODULE_VERSION" >> $GITHUB_OUTPUT
           echo "manifest_url=$MANIFEST_URL" >> $GITHUB_OUTPUT
 
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ steps.get_module_info.outputs.version }}
-          body: |
-            This is an automated release of version ${{ steps.get_module_info.outputs.version }}.
-          draft: false
-          prerelease: false
-
       - name: Package Module
         run: |
           zip -r module.zip lang/ module.json scripts/ styles/ assets/ README.md LICENSE
 
-      - name: Upload Release Asset
-        id: upload-release-asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./module.zip
-          asset_name: module.zip
-          asset_content_type: application/zip
-
-      - name: Upload Manifest
-        id: upload-manifest
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./module.json
-          asset_name: module.json
-          asset_content_type: application/json
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ steps.get_module_info.outputs.version }}
+          body: |
+            This is an automated release of version ${{ steps.get_module_info.outputs.version }}.
+          draft: false
+          prerelease: false
+          files: |
+            module.zip
+            module.json
 
       - name: Release to Foundry VTT
         uses: illandril/FoundryVTT-package-release-action@v1
