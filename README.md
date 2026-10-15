@@ -23,6 +23,20 @@ According to RAW, the caster can choose to activate the ward when casting an Abj
 Like most modules, find it in the module directory in Foundry, or use the manifest url:
 <https://github.com/averagejoe77/arcane-warding/releases/latest/download/module.json> to install manually.
 
+## Privacy / Anonymous Usage Data
+
+Foundry does not tell module authors how many installs are actually being used, so this module sends a small **anonymous** ping to `dungeonsandderps.com` when a world loads with the module active (and a light heartbeat while that session stays open).
+
+Each ping contains only:
+
+- a random id generated for the world (not tied to you, your account, or your machine)
+- the Arcane Warding, Foundry VTT, and game-system version numbers
+- the client language (e.g. `en`)
+
+No account details, world content, actor data, or player information is ever sent. Only the primary GM's client reports, so a full table is counted once. This is used purely to see roughly how many games use the module and which versions to keep supporting.
+
+**To opt out:** open **Game Settings → Configure Settings → Arcane Warding** and uncheck **Share anonymous usage data**.
+
 ## How It Works
 
 ### Arcane Ward Detection
@@ -39,14 +53,14 @@ When a spell is cast, the module:
 1. Checks if the caster is an Abjurer wizard or in the School of Abjuration
 2. Determines if the spell is an Abjuration spell
 3. If it's an Abjuration spell, ask if the user would like to create the Arcane Ward if it is not already active
-   1. heal the ward for 2x the spell level is the ward is already active
+   1. heal the ward for 2x the spell level if the ward is already active
 
 ### Arcane Ward Mechanics
 
 - **Max HP**: Wizard level + Intelligence modifier
 - **Healing**: Spell level × 2 HP restored to the ward when an Abjuraton spell is cast and the ward is active
 - **Overhealing**: "I don't think so Tim." If healing would exceed max HP, only heals up to the maximum
-- **NOT IMPLEMENTED**: Healing the ward by expending a spell slot without casting a spell. Spell slots are "game mechanic" and do not fall into the real of "how would this work if it were real" which is a basic tenent that I have built this on. If I find that users want the feature added or I find that is would be super useful in actual gameplay, I will look at adding it later
+- **NOT IMPLEMENTED**: Healing the ward by expending a spell slot without casting a spell. Spell slots are "game mechanic" and do not fall into the realm of "how would this work if it were real" which is a basic tenent that I have built this on. If I find that users want the feature added or I find that is would be super useful in actual gameplay, I will look at adding it later
 
 ### User Interface
 

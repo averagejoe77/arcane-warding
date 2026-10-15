@@ -2,6 +2,19 @@
 
 All notable changes to the Arcane Warding module will be documented in this file.
 
+## [1.2.27] - 2026-10-15
+
+### Added
+- **Analytics tracking**: While tracking the number of downloads from the github api is useful for seeing how many people have an interest in a module, it doe nto reflect the number of people that have downoaded the module are actively using it. i wanted a way to track active modules as foundry has no analytics mechinism on it's own. I know some of you are going to freak out over this, and that is why there is an opt out option in the settings. if you decide that you want to opt out, that is perfectly fine, but leaving it on will help me to see the actual number of active uses and help me decide if I should keep supporting the module for future foundry and DND version updates.
+
+### Fixed
+- **Active Effect Application**: As this was my first module I may have made some small errors in the way in which I was applying effects to both the Abjuration wizard and the target of the Projected Ward. This had the nasty side effect of causing some unwanted issues in v14 that were nto issues in v13. so that has been cleaned up.
+
+### Note:
+- I have not tested on dnd v6 as of yet. That will be the next update sometime before next year, as I need some other modules to get updated first, and I want to make they are in a stable position before I go down that rabbit whole.
+
+---
+
 ## [1.2.25] - 2026-07-23
 
 ### Added

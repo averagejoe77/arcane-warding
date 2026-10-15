@@ -1,5 +1,8 @@
 import { SOCKET_NAME, handleSendMessageRequest } from './socket.js';
 
+const MODULE_ID = 'arcane-warding';
+const WARD_ICON = 'modules/arcane-warding/assets/icons/arcane-ward.svg';
+
 /**
  * Send a message to the chat
  * 
@@ -87,26 +90,103 @@ function hasArcaneWard(actor) {
 }
 
 /**
+ * Check if an effect is an Arcane Ward created by this module
+ *
+ * Effects created before the module started flagging them are matched by name so existing wards keep working.
+ *
+ * @param {ActiveEffect} effect - The effect to check
+ * @returns {boolean} - True if the effect is an Arcane Ward, false otherwise
+ */
+function isWardEffect(effect) {
+	const flags = effect.flags?.[MODULE_ID];
+	if (flags) return flags.ward === true;
+	return effect.name === "Arcane Ward" || effect.name === game.i18n.localize('ARCANE_WARDING.EFFECT_NAME');
+}
+
+/**
  * Get the Arcane Ward effect
- * 
- * @param {Item or Actor} item - The item or actor to check
+ *
+ * @param {Actor} actor - The actor to check
  * @returns {ActiveEffect} - The Arcane Ward effect
  */
-function getArcaneWardEffect(item) {
-	if(hasArcaneWardEffect(item)) {
-		return item.effects.find(effect => effect.name === "Arcane Ward");
-	}
-	return null;
+function getArcaneWardEffect(actor) {
+	return actor.effects.find(isWardEffect) ?? null;
 }
 
 /**
  * Check if the actor has the Arcane Ward effect
- * 
- * @param {Actor or Item} item - The actor or item to check
+ *
+ * @param {Actor} actor - The actor to check
  * @returns {boolean} - True if the actor has an Arcane Ward effect, false otherwise
  */
-function hasArcaneWardEffect(item) {
-	return item.effects.find(effect => effect.name === "Arcane Ward") ? true : false;
+function hasArcaneWardEffect(actor) {
+	return getArcaneWardEffect(actor) !== null;
+}
+
+/**
+ * Get the Projected Ward marker effect placed on a target
+ *
+ * @param {Actor} actor - The actor to check
+ * @returns {ActiveEffect} - The Projected Ward marker effect
+ */
+function getProjectedWardEffect(actor) {
+	return actor.effects.find(effect => effect.flags?.[MODULE_ID]?.projected === true) ?? null;
+}
+
+/**
+ * Build the effect data shared by the Arcane Ward and Projected Ward effects
+ *
+ * Built from scratch every time rather than copied from an existing document, so no stray
+ * system or module data can follow it onto the actor.
+ *
+ * @param {Item} wardFeature - The Arcane Ward feature
+ * @param {string} name - The name of the effect
+ * @param {Object} moduleFlags - The flags to store under this module's scope
+ * @returns {Object} - The effect data
+ */
+function buildEffectData(wardFeature, name, moduleFlags) {
+	const effectData = {
+		name: name,
+		description: wardFeature.system.description.value,
+		origin: wardFeature.uuid,
+		disabled: false,
+		transfer: false,
+		// no DAE "longRest" special duration: onRestCompleted removes the effect, and letting both do it races
+		flags: {
+			dae: { showIcon: true },
+			[MODULE_ID]: moduleFlags
+		}
+	};
+	//v13 uses icon and v14 uses img - why foundry why?
+	if (game.release.generation >= 14) {
+		effectData.showIcon = 2;
+		effectData.img = WARD_ICON;
+	} else {
+		effectData.showIcon = 1;
+		effectData.icon = WARD_ICON;
+	}
+	return effectData;
+}
+
+/**
+ * Build the data for the Arcane Ward effect on the wizard
+ *
+ * @param {Item} wardFeature - The Arcane Ward feature
+ * @returns {Object} - The effect data
+ */
+function buildWardEffectData(wardFeature) {
+	return buildEffectData(wardFeature, game.i18n.localize('ARCANE_WARDING.EFFECT_NAME'), { ward: true });
+}
+
+/**
+ * Build the data for the Projected Ward marker effect on a target
+ *
+ * @param {Item} wardFeature - The Arcane Ward feature of the protecting wizard
+ * @param {Actor} protector - The wizard projecting the ward
+ * @returns {Object} - The effect data
+ */
+function buildProjectedWardEffectData(wardFeature, protector) {
+	return buildEffectData(wardFeature, game.i18n.localize('ARCANE_WARDING.PROJECTED_EFFECT_NAME'), { projected: true, protector: protector.uuid });
 }
 
 /**
@@ -333,7 +413,9 @@ function shouldSkip(actor, target, attacker) {
  */
 function useFullMessaging(actor) {
 	const wardFeature = getArcaneWard(actor);
-	return wardFeature.flags?.arcaneWarding?.fullMessaging;
+	if (!wardFeature) return false;
+	// fall back to the old "arcaneWarding" flag scope so existing toggles are kept
+	return wardFeature.flags?.[MODULE_ID]?.fullMessaging ?? wardFeature.flags?.arcaneWarding?.fullMessaging ?? false;
 }
 
 /**
@@ -383,8 +465,11 @@ export {
 	isAbjurerWizard, 
 	getArcaneWard, 
 	hasArcaneWard, 
-	getArcaneWardEffect, 
+	getArcaneWardEffect,
 	hasArcaneWardEffect,
+	getProjectedWardEffect,
+	buildWardEffectData,
+	buildProjectedWardEffectData,
 	getActorsWithProjectedWard,
 	hasProjectedWard, 
 	getArcaneWardHP, 
